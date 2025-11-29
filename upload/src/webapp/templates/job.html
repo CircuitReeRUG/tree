@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='job.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="job-page">
+    <div class="job-header">
+        <h1>{{ filename }}</h1>
+        <div class="job-info">
+            <span>User: {{ username }}</span>
+            <span>Hash: {{ job_hash }}</span>
+            <span>Status: <span id="status" class="status-{{ status }}">{{ status }}</span></span>
+        </div>
+    </div>
+    
+    <div class="split-view">
+        <div class="pane left-pane">
+            <h2>Code</h2>
+            <pre id="code">{{ code if code else 'Code not available...' }}</pre>
+        </div>
+        
+        <div class="pane right-pane">
+            <h2>Output</h2>
+            <pre id="output">{{ output if output else 'No output yet...' }}</pre>
+        </div>
+    </div>
+    
+    <div class="actions">
+        <a href="{{ url_for('monitor') }}" class="btn">Back to Queue</a>
+        <a href="{{ url_for('upload_view') }}" class="btn">Upload Another</a>
+    </div>
+</div>
+
+<script>
+    const statusEl = document.getElementById('status');
+    
+    if (statusEl.textContent.trim() === 'pending' || statusEl.textContent.trim() === 'running') {
+        const poll = setInterval(() => {
+            fetch('/api/job/{{ job_hash }}')
+                .then(r => r.json())
+                .then(data => {
+                    statusEl.textContent = data.status;
+                    statusEl.className = 'status-' + data.status;
+                    document.getElementById('output').textContent = data.output || 'No output yet...';
+                    
+                    if (data.status === 'completed' || data.status === 'not_found') {
+                        clearInterval(poll);
+                    }
+                });
+        }, 2000);
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+.job-page {
+    max-width: 100%;
+    padding: 20px;
+}
+
+.job-header {
+    margin-bottom: 30px;
+}
+
+.job-info {
+    display: flex;
+    gap: 30px;
+    margin-top: 15px;
+    padding: 15px;
+    background-color: #f5f5f5;
+    border-left: 4px solid #F6921D;
+    font-size: 14px;
+}
+
+.status-pending {
+    color: #878787;
+}
+
+.status-running {
+    color: #F6921D;
+    font-weight: bold;
+}
+
+.status-completed {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.split-view {
+    display: flex;
+    gap: 0;
+    height: 600px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.pane {
+    border: 2px solid #BAB9B7;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.left-pane {
+    flex: 0 0 40%;
+    border-right: none;
+    background-color: #1e1e1e;
+}
+
+.right-pane {
+    flex: 0 0 60%;
+    background-color: #1e1e1e;
+}
+
+.pane h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #F6921D;
+    border-bottom: 2px solid #F6921D;
+    padding-bottom: 10px;
+}
+
+#output, #code {
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    color: #d4d4d4;
+    font-size: 13px;
+    margin: 0;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 12px 30px;
+    background-color: #F6921D;
+    color: #FFFFFF;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background-color: #e07e14;
+}

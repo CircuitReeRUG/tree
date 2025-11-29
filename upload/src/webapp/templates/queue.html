@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="queue-page">
+    <h1>Queue</h1>
+    <p class="notice">Note: Only the most recent 20 completed jobs are kept. Older logs are automatically removed.</p>
+    <div id="queue-container">
+        {% if queue %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Filename</th>
+                        <th>Status</th>
+                        <th>User</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in queue %}
+                    <tr class="queue-item {{ item.status }}">
+                        <td>{{ loop.index }}</td>
+                        <td>{{ item.filename }}</td>
+                        <td><span class="status-badge">{{ item.status }}</span></td>
+                        <td>{{ item.user }}</td>
+                        <td><a href="{{ url_for('job_view', job_hash=item.hash) }}" class="view-link">View</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="empty-queue">Queue is empty</p>
+        {% endif %}
+    </div>
+    <a href="{{ url_for('upload_view') }}" class="upload-link">Upload New Code</a>
+</div>
+{% endblock %}
