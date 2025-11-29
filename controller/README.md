@@ -1,0 +1,1 @@
+This folder houses the lights controller container.
