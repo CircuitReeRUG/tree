@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   controller:
     build:
@@ -31,7 +29,7 @@ services:
       - TREE_LEDS=16
       - LED_SOCKET_PATH=/tmp/led_socket
     volumes:
-      - ./upload/src:/app
+      - ./upload:/app
       - led-socket:/tmp
     depends_on:
       - controller

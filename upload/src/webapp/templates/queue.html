@@ -6,8 +6,10 @@
 
 {% block content %}
 <div class="queue-page">
-    <h1>Queue</h1>
-    <p class="notice">Note: Only the most recent 20 completed jobs are kept. Older logs are automatically removed.</p>
+    <div id="header">
+        <h1>Queue</h1>
+        <p class="notice">Note: Only the most recent 20 completed jobs are kept. Older logs are automatically removed.</p>
+    </div>
     <div id="queue-container">
         {% if queue %}
             <table>

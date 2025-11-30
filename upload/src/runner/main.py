@@ -5,7 +5,8 @@ from .color import Color
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-from RestrictedPython import compile_restricted, safe_globals, PrintCollector
+from RestrictedPython import compile_restricted, safe_globals, PrintCollector, limited_builtins
+from RestrictedPython.Eval import default_guarded_getiter
 from RestrictedPython.Guards import guarded_iter_unpack_sequence, safer_getattr
 from .exposed import get_exposed_functions
 
@@ -13,9 +14,10 @@ def execute_code(code: str) -> str:
     byte_code = compile_restricted(code, '<user_code>', 'exec')
     
     restricted_globals = {
-        '__builtins__': safe_globals,
+        '__builtins__': limited_builtins,
         '_iter_unpack_sequence_': guarded_iter_unpack_sequence,
         '_getattr_': safer_getattr,
+        '_getiter_': default_guarded_getiter,
         '_print_': PrintCollector,
         '_getitem_': lambda obj, index: obj[index],
 

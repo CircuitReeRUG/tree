@@ -7,18 +7,19 @@ processes = []
 
 def main():
     print("Starting Chippy Tree services...")
-    
+    # cd to src/webapp and start Flask server
     flask_proc = subprocess.Popen(
-        ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"],
-        cwd="webapp",
+        ["flask", "run", "--host=0.0.0.0", "--port=5000"],
+        cwd="src/webapp/",
         env={**dict(os.environ), "FLASK_APP": "app.py"}
     )
     processes.append(flask_proc)
     print("Flask server started on http://localhost:5000")
     
+    # cd to src/scheduler and start worker
     worker_proc = subprocess.Popen(
         ["python", "worker.py"],
-        cwd="scheduler"
+        cwd="src/scheduler/"
     )
     processes.append(worker_proc)
     

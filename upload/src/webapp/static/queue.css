@@ -1,6 +1,9 @@
 #queue-container {
     margin: 40px 0;
 }
+#header {
+    text-align: center;
+}
 
 table {
     width: 100%;
@@ -27,25 +30,6 @@ tr.queue-item:hover {
     background-color: #f5f5f5;
 }
 
-tr.running {
-    background-color: #fff3e0;
-}
-
-.status-badge {
-    padding: 5px 10px;
-    background-color: #BAB9B7;
-    color: #FFFFFF;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-tr.running .status-badge {
-    background-color: #F6921D;
-}
-
-tr.pending .status-badge {
-    background-color: #878787;
-}
 
 .empty-queue {
     text-align: center;
@@ -55,13 +39,14 @@ tr.pending .status-badge {
 }
 
 .upload-link {
-    display: inline-block;
-    margin-top: 20px;
+    display: block;
+    margin: 0 auto;
     padding: 12px 30px;
     background-color: #F6921D;
     color: #FFFFFF;
     text-decoration: none;
     font-weight: bold;
+    width: fit-content;
 }
 
 .upload-link:hover {

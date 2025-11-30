@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% block head %}
+    <style>
+body {
+margin: 0;
+overflow: hidden;
+        }
+#editor-page {
+display: flex;
+flex-direction: column;
+height: 100vh;
+        }
+#editor-toolbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 12px;
+padding: 12px 16px;
+background-color: #2D2D2D;
+border-bottom: 1px solid #BAB9B7;
+        }
+#editor-toolbar-left {
+display: flex;
+align-items: center;
+gap: 8px;
+        }
+#editor-container {
+flex: 1;
+position: relative;
+overflow: hidden;
+        }
+#editor {
+width: 100%;
+height: 100%;
+        }
+#editor-toolbar button,
+#editor-toolbar input[type="text"] {
+padding: 8px 14px;
+border-radius: 4px;
+border: 1px solid #BAB9B7;
+font-size: 14px;
+background-color: #1E1E1E;
+color: #CCCCCC;
+        }
+#editor-toolbar input[type="text"]::placeholder {
+color: #858585;
+        }
+#editor-toolbar button.primary {
+background-color: #F6921D;
+color: #FFFFFF;
+border-color: #F6921D;
+font-weight: bold;
+cursor: pointer;
+        }
+#editor-toolbar button.primary:hover {
+background-color: #e07e14;
+        }
+#message {
+min-height: 20px;
+font-size: 14px;
+color: #CCCCCC;
+        }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"
+crossorigin="anonymous"
+referrerpolicy="no-referrer"></script>
+{% endblock %}
+{% block content %}
+<div id="editor-page">
+    <div id="editor-toolbar">
+        <div id="editor-toolbar-left">
+            <form id="editor-form" method="POST" action="{{ url_for('upload_view') }}" style="display:flex; gap:8px; align-items:center;">
+                <input type="hidden" name="editor_code" id="editor_code">
+                <input type="text" name="username" placeholder="Username (optional)" maxlength="32">
+                <button type="submit" class="primary">Run on Tree</button>
+            </form>
+        </div>
+        <div id="message"></div>
+    </div>
+    <div id="editor-container">
+        <div id="editor"></div>
+    </div>
+</div>
+<script>
+// Configure Monaco loader
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+let editor;
+require(['vs/editor/editor.main'], function () {
+// Register custom Python types for the exposed functions
+const exposedFunctions = `
+def getLEDCount() -> int:
+    """Returns the total number of LEDs in the tree."""
+    pass
+
+def setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool:
+    """
+    Set the LED states for the entire tree.
+    
+    Args:
+        new_leds: List of tuples (R, G, B, Luminance) where each value is 0-255
+    
+    Returns:
+        True if successful
+    
+    Raises:
+        ValueError: If list size doesn't match tree size or invalid LED values
+    """
+    pass
+
+def clearLEDs() -> None:
+    """Clear all LEDs (set to off/black)."""
+    pass
+`;
+
+// Configure Python language features
+monaco.languages.registerCompletionItemProvider('python', {
+provideCompletionItems: (model, position) => {
+const suggestions = [
+                    {
+label: 'getLEDCount',
+kind: monaco.languages.CompletionItemKind.Function,
+insertText: 'getLEDCount()',
+documentation: 'Returns the total number of LEDs in the tree'
+                    },
+                    {
+label: 'setLEDs',
+kind: monaco.languages.CompletionItemKind.Function,
+insertText: 'setLEDs(${1:led_states})',
+insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+documentation: 'Set LED states: list of (R, G, B, Luminance) tuples'
+                    },
+                    {
+label: 'clearLEDs',
+kind: monaco.languages.CompletionItemKind.Function,
+insertText: 'clearLEDs()',
+documentation: 'Clear all LEDs (set to off)'
+                    }
+                ];
+return { suggestions };
+            }
+        });
+
+// Create editor with enhanced settings
+editor = monaco.editor.create(document.getElementById('editor'), {
+value: `# Example: Control the LED tree
+led_count = getLEDCount()
+states = [(255, 255, 255, 100) for _ in range(led_count)]
+setLEDs(states)
+`,
+language: 'python',
+theme: 'vs-dark',
+automaticLayout: true,
+minimap: { enabled: false },
+fontSize: 14,
+lineNumbers: 'on',
+roundedSelection: false,
+scrollBeyondLastLine: false,
+readOnly: false,
+cursorStyle: 'line',
+            // Enable linting and validation
+quickSuggestions: {
+other: true,
+comments: false,
+strings: false
+            },
+parameterHints: { enabled: true },
+suggestOnTriggerCharacters: true,
+acceptSuggestionOnCommitCharacter: true,
+tabCompletion: 'on',
+wordBasedSuggestions: true,
+formatOnPaste: true,
+formatOnType: true
+        });
+
+// Add custom validation for exposed functions
+monaco.editor.onDidCreateModel((model) => {
+if (model.getLanguageId() === 'python') {
+validatePythonCode(model);
+            }
+        });
+
+editor.onDidChangeModelContent(() => {
+validatePythonCode(editor.getModel());
+        });
+
+function validatePythonCode(model) {
+const code = model.getValue();
+const markers = [];
+
+// Check for common issues with exposed functions
+const lines = code.split('\n');
+            
+lines.forEach((line, idx) => {
+// Check setLEDs usage
+if (line.includes('setLEDs(') && !line.includes('getLEDCount()')) {
+const match = line.match(/setLEDs\s*\(\s*\[.*?\]\s*\)/);
+if (match) {
+// Check if they're creating a list literal without checking size
+if (!code.includes('getLEDCount()') && !code.includes('led_count')) {
+markers.push({
+severity: monaco.MarkerSeverity.Warning,
+startLineNumber: idx + 1,
+startColumn: 1,
+endLineNumber: idx + 1,
+endColumn: line.length + 1,
+message: 'Consider using getLEDCount() to ensure correct LED list size'
+                        });
+                    }
+                }
+            }
+
+// Check for tuple format in setLEDs
+if (line.includes('setLEDs(')) {
+if (line.includes('[') && !line.match(/\[\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\]/)) {
+if (!line.includes('for ') && !line.includes('range(')) {
+markers.push({
+severity: monaco.MarkerSeverity.Info,
+startLineNumber: idx + 1,
+startColumn: 1,
+endLineNumber: idx + 1,
+endColumn: line.length + 1,
+message: 'setLEDs expects tuples of (R, G, B, Luminance) with values 0-255'
+                        });
+                    }
+                }
+            }
+        });
+
+monaco.editor.setModelMarkers(model, 'python', markers);
+        }
+    });
+
+// Intercept form submit and send editor contents
+document.getElementById('editor-form').addEventListener('submit', function (e) {
+if (!editor) return;
+const code = editor.getValue();
+const hidden = document.getElementById('editor_code');
+hidden.value = code;
+    });
+</script>
+{% endblock %}
