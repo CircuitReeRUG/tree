@@ -15,16 +15,9 @@
         </div>
     </div>
     
-    <div class="split-view">
-        <div class="pane left-pane">
-            <h2>Code</h2>
-            <pre id="code">{{ code if code else 'Code not available...' }}</pre>
-        </div>
-        
-        <div class="pane right-pane">
-            <h2>Output</h2>
-            <pre id="output">{{ output if output else 'No output yet...' }}</pre>
-        </div>
+    <div class="output-view">
+        <h2>Output</h2>
+        <pre id="output">{{ output if output else 'No output yet...' }}</pre>
     </div>
     
     <div class="actions">

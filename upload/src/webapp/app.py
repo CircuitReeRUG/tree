@@ -3,6 +3,7 @@ import os
 import ast
 import hashlib
 import time
+import json
 from io import BytesIO
 
 app = Flask(__name__)
@@ -10,26 +11,48 @@ app = Flask(__name__)
 JOB_DIR = "../scheduler/jobs"
 LOG_DIR = "../scheduler/logs"
 ARCHIVE_DIR = "../scheduler/archive"
+METADATA_FILE = "../scheduler/metadata.json"
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(ARCHIVE_DIR, exist_ok=True)
+
+def load_metadata():
+    """Load metadata from JSON file"""
+    if os.path.exists(METADATA_FILE):
+        with open(METADATA_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_metadata(metadata):
+    """Save metadata to JSON file"""
+    with open(METADATA_FILE, 'w') as f:
+        json.dump(metadata, f, indent=2)
+
+def get_metadata_for_hash(job_hash):
+    """Get metadata for a specific job hash"""
+    metadata = load_metadata()
+    return metadata.get(job_hash, {
+        "filename": "unknown",
+        "username": "unknown",
+        "timestamp": 0
+    })
 
 def get_queue_data():
     """Get queue data from job files and logs"""
     queue_items = []
+    metadata = load_metadata()
     
     # Add active jobs
     if os.path.exists(JOB_DIR):
         for idx, job_file in enumerate(sorted([f for f in os.listdir(JOB_DIR) if f.endswith(".py")])):
-            parts = job_file.rsplit("_", 2)
-            file_hash = parts[0] if len(parts) >= 3 else "unknown"
-            username = parts[1] if len(parts) >= 3 else "unknown"
-            original_name = "_".join(parts[2:]) if len(parts) >= 3 else job_file
+            # Extract hash from filename (removing .py or _working.py)
+            file_hash = job_file.replace("_working.py", "").replace(".py", "")
+            meta = metadata.get(file_hash, {"filename": "unknown", "username": "unknown"})
             
             queue_items.append({
                 "id": idx + 1,
-                "filename": original_name,
+                "filename": meta["filename"],
                 "status": "running" if "_working" in job_file else "pending",
-                "user": username,
+                "user": meta["username"],
                 "hash": file_hash
             })
     
@@ -39,22 +62,14 @@ def get_queue_data():
             job_hash = log_file.replace(".log", "")
             if any(item["hash"] == job_hash for item in queue_items):
                 continue
-                
-            with open(os.path.join(LOG_DIR, log_file), 'r') as f:
-                first_line = f.readline()
-                if "Job started:" in first_line:
-                    parts = first_line.split("Job started: ")[1].strip().rsplit("_", 2)
-                    username = parts[1] if len(parts) >= 3 else "unknown"
-                    original_name = "_".join(parts[2:]) if len(parts) >= 3 else "completed"
-                else:
-                    username = "unknown"
-                    original_name = "completed"
+            
+            meta = metadata.get(job_hash, {"filename": "completed", "username": "unknown"})
             
             queue_items.append({
                 "id": len(queue_items) + 1,
-                "filename": original_name,
+                "filename": meta["filename"],
                 "status": "completed",
-                "user": username,
+                "user": meta["username"],
                 "hash": job_hash
             })
     
@@ -72,40 +87,32 @@ def queue_api():
 @app.route('/job/<job_hash>')
 def job_view(job_hash):
     """View individual job"""
-    job_file = None
     status = "completed"
     
     # Check if job is in queue
     if os.path.exists(JOB_DIR):
         for f in os.listdir(JOB_DIR):
-            if f.startswith(job_hash):
-                job_file = f
+            if f.replace("_working.py", "").replace(".py", "") == job_hash:
                 status = "running" if "_working" in f else "pending"
                 break
     
-    # Parse job info
-    if job_file:
-        parts = job_file.rsplit("_", 2)
-        username = parts[1] if len(parts) >= 3 else "unknown"
-        original_name = "_".join(parts[2:]) if len(parts) >= 3 else job_file
-    else:
-        username = "unknown"
-        original_name = "completed"
+    # Get metadata
+    meta = get_metadata_for_hash(job_hash)
     
-    # Read log and code
+    # Read log to determine if failed
     log_path = os.path.join(LOG_DIR, f"{job_hash}.log")
-    output = open(log_path, 'r').read() if os.path.exists(log_path) else ""
-    
-    code_path = os.path.join(ARCHIVE_DIR, f"{job_hash}.py")
-    code = open(code_path, 'r').read() if os.path.exists(code_path) else ""
+    output = ""
+    if os.path.exists(log_path):
+        output = open(log_path, 'r').read()
+        if status == "completed" and "Job failed with error:" in output:
+            status = "failed"
     
     return render_template("job.html", 
                          job_hash=job_hash,
-                         filename=original_name,
-                         username=username,
+                         filename=meta["filename"],
+                         username=meta["username"],
                          status=status,
-                         output=output,
-                         code=code)
+                         output=output)
 
 @app.route('/api/job/<job_hash>')
 def job_api(job_hash):
@@ -114,21 +121,24 @@ def job_api(job_hash):
     
     if os.path.exists(JOB_DIR):
         for f in os.listdir(JOB_DIR):
-            if f.startswith(job_hash):
+            if f.replace("_working.py", "").replace(".py", "") == job_hash:
                 status = "running" if "_working" in f else "pending"
                 break
     
     log_path = os.path.join(LOG_DIR, f"{job_hash}.log")
-    output = open(log_path, 'r').read() if os.path.exists(log_path) else ""
+    output = ""
+    if os.path.exists(log_path):
+        output = open(log_path, 'r').read()
+        if status == "completed" and "Job failed with error:" in output:
+            status = "failed"
     
     return jsonify({"status": status, "output": output})
 
-def __hash_name(original_name: str, username: str, file):
-    # hash content - 8 bytes of file ++ timestamp
-    file_hash = hashlib.sha256(file.read(8)).hexdigest()[:8]
+def __hash_name(file):
+    """Generate hash from file content and timestamp"""
+    file_hash = hashlib.sha256(file.read(8) + str(time.time()).encode()).hexdigest()[:8]
     file.seek(0)
-    
-    return f"{file_hash}_{username}_{original_name}"
+    return file_hash
 
 @app.route("/editor")
 def editor_view():
@@ -197,10 +207,20 @@ def upload_view():
                                        code="error")
 
             original_name = uploaded_file.filename if getattr(uploaded_file, "filename", None) else "unnamed.py"
-            hashed_filename = __hash_name(original_name, username, uploaded_file)
-            job_hash = hashed_filename.split("_")[0]
+            job_hash = __hash_name(uploaded_file)
+            
+            # Save metadata
+            metadata = load_metadata()
+            metadata[job_hash] = {
+                "filename": original_name,
+                "username": username,
+                "timestamp": time.time()
+            }
+            save_metadata(metadata)
+            
+            # Save file with hash-only name
             os.makedirs(JOB_DIR, exist_ok=True)
-            file_path = os.path.join(JOB_DIR, hashed_filename)
+            file_path = os.path.join(JOB_DIR, f"{job_hash}.py")
             uploaded_file.save(file_path)
 
             return redirect(url_for("job_view", job_hash=job_hash))

@@ -9,11 +9,14 @@ SERVER_ADDRESS = os.environ.get('LED_SOCKET_PATH', '/tmp/led_socket')
 
 def _send_message(message: str) -> str:
     time.sleep(0.1)  # Rate limiting
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
-        client.connect(SERVER_ADDRESS)
-        client.sendall(message.encode('utf-8'))
-        response = client.recv(4096).decode('utf-8')
-    return response
+    try:
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+            client.connect(SERVER_ADDRESS)
+            client.sendall(message.encode('utf-8'))
+            response = client.recv(4096).decode('utf-8')
+        return response
+    except (FileNotFoundError, ConnectionRefusedError, OSError) as e:
+        return "OK (LED server not connected)"
 
 def getLEDCount() -> int:
     return SIZE
@@ -47,4 +50,4 @@ def get_exposed_functions() -> dict: #pyright: ignore[reportMissingTypeArgument]
         if callable(obj) and not name.startswith('_') and name != 'get_exposed_functions':
             exposed[name] = obj
     
-    return exposed 
+    return exposed
