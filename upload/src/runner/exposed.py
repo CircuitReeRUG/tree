@@ -44,6 +44,16 @@ def clearLEDs() -> None:
     time.sleep(0.05)
     setLEDs( [(0,0,0,0)] * SIZE )
 
+def sleep(seconds: float) -> None:
+    """Sleep for the given number of seconds."""
+    if not isinstance(seconds, (int, float)):
+        raise TypeError("sleep() argument must be a number")
+    if seconds < 0:
+        raise ValueError("sleep() argument must be non-negative")
+    if seconds > 10:
+        raise ValueError("sleep() argument must be at most 10 seconds")
+    time.sleep(seconds)
+
 def get_exposed_functions() -> dict: #pyright: ignore[reportMissingTypeArgument]
     current_module = inspect.getmembers(inspect.getmodule(inspect.currentframe()))
     exposed = {}
