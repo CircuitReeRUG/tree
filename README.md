@@ -41,7 +41,7 @@ flowchart LR
 > Let A be the container which houses the upload/editor + scheduler + queue visualization page, and B be the container which houses the code execution environment + RPI GPIO controller.
 
 # Container B
-Container B will be exposed to Container A over Docker's internal network using Unix socket through the following simple protocol:
+Container B will be exposed to Container A over Docker's internal network using Unix socket through the following protocol:
 
 ## LED State
 Is a tuple of 4 integers.
@@ -55,7 +55,20 @@ Is an array of 4-tuples of integers.
 ```
 [(R1, G1, B1, L1), (R2, G2, B2, L2), ...]
 ```
+
+This array will be of length N, where N is the pre-defined number of LEDs on the christmas tree, as set by the `TREE_LEDS` environment variable.
+
 This is what will be sent from Container A to Container B to set the states of all LEDs.
+
+>[!WARNING]
+> For our predicted number of LEDs (500), the math is the following:
+> each tuple is max 17 characters long (including commas and parentheses) -> `(255,255,255,100)`
+> 500 tuples -> 500 * 17 = 8500 characters
+> plus commas between tuples -> 499 commas
+> plus square brackets -> 2 characters
+> Total: 8999 characters => ~9KB of data per update.
+> That's *disgusting* for a color transfer protocol, but atp it's a tradition to fuck this part up
+> Be my guest if you want to implement a better protocol.
 
 > [!IMPORTANT]
 > An array with less elements than the pre-defined number of leds is **not allowed** and will be rejected by the validation module.

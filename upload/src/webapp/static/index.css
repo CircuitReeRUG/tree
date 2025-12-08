@@ -1,0 +1,43 @@
+.subtitle {
+    font-size: 18px;
+    color: #878787;
+    margin-bottom: 40px;
+}
+
+.nav-cards {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.nav-card {
+    display: block;
+    width: 250px;
+    padding: 40px 30px;
+    background-color: #FFFFFF;
+    border: 3px solid #F6921D;
+    text-decoration: none;
+    color: #000000;
+}
+
+.nav-card:hover {
+    background-color: #F6921D;
+    color: #FFFFFF;
+}
+
+.nav-card h2 {
+    margin: 0 0 10px 0;
+    font-size: 24px;
+    color: inherit;
+}
+
+.nav-card p {
+    margin: 0;
+    font-size: 14px;
+    color: #878787;
+}
+
+.nav-card:hover p {
+    color: #FFFFFF;
+}

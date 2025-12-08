@@ -1,1 +1,6 @@
-.vscode/settings.json
+__pycache__/
+.vscode/
+*archive/
+*logs/
+*jobs/
+metadata.json
