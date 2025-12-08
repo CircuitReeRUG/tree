@@ -91,7 +91,7 @@ setLEDs(states)
 ```
 
 > [!NOTE]
-> Read the [runner docs](/runner/README.md) for more info on the allowed code and abstractions.
+> Read the [runner docs](/upload/README.md) for more info on the allowed code and abstractions.
 
 ## Web Service
 Will provide:
@@ -121,10 +121,8 @@ Each submission gets:
 | ----------- | ------------------------------------------ |
 | `uuid`      | UUID of submission                         |
 | `timestamp` | Time of submission                         |
-| `language`  | Language of submission                     |
-| `user_id`   | Fingerprint of user (IP + User-Agent hash) |
 
-No need for manual handling or DBs (no Mongo @masecla22, sorry), just give `user_id` as cookie and store file as `<user_id>_<uuid>.<lang_extension>`. 
+No need for manual handling or DBs (no Mongo @masecla22, sorry), just store file as `<uuid>.py` and save metadata separately. 
 
 >[!NOTE]
 > any self-respecting webserver does threading for us, so we don't need to worry about race conditions in uploading
