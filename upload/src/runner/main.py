@@ -46,6 +46,10 @@ def execute_code(code: str) -> str:
             result = restricted_globals['_print']() # pyright: ignore[reportCallIssue]
         else:
             result = ""
+        
+        if not result.strip():
+            result = "No prints invoked, but ur program executed ok (we hope)"
+        
         return result #pyright: ignore[reportReturnType]
     except Exception as e:
         return f"Error: {e}"
@@ -62,4 +66,3 @@ def __debug_cli():
 
 if __name__ == "__main__":
     __debug_cli()
-    
