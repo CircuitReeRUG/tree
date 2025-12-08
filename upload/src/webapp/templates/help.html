@@ -1,0 +1,23 @@
+<!-- Help Button -->
+<button id="helpBtn" class="help-btn">?</button>
+<div id="helpModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>API Reference</h3>
+        <p><code>getLEDCount()</code> - returns LED count</p>
+        <p><code>setLEDs([(r,g,b,l), ...])</code> - set all LEDs (r,g,b: 0-255, l: 0-100)</p>
+        <p><code>clearLEDs()</code> - turn off all LEDs</p>
+        <p><code>sleep(seconds)</code> - pause (max 10s)</p>
+        <hr>
+        <p><strong>Colors:</strong> RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA, WHITE, ORANGE, PURPLE, PINK, OFF</p>
+        <p><strong>Modules:</strong> <a href="https://docs.python.org/3/library/math.html" target="_blank">math</a>, <a href="https://docs.python.org/3/library/random.html" target="_blank">random</a></p>
+        <hr>
+        <small>Note: No linting for external files. Use web editor for validation.</small>
+    </div>
+</div>
+
+<script>
+    document.getElementById('helpBtn').onclick = () => document.getElementById('helpModal').style.display = 'block';
+    document.querySelector('.close').onclick = () => document.getElementById('helpModal').style.display = 'none';
+    window.onclick = (e) => { if (e.target == document.getElementById('helpModal')) e.target.style.display = 'none'; };
+</script>
