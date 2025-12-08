@@ -7,14 +7,13 @@ SIZE:int = int(os.environ.get("TREE_LEDS", "1"))
 leds = [(0,0,0,0)] * SIZE 
 SERVER_ADDRESS = os.environ.get('LED_SOCKET_PATH', '/tmp/led_socket')
 
-def _send_message(message: str) -> str:
+def _send_message(message: bytes) -> str:
     time.sleep(0.1)  # Rate limiting
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
             client.connect(SERVER_ADDRESS)
-            client.sendall(message.encode('utf-8'))
-            response = client.recv(4096).decode('utf-8')
-        return response
+            client.sendall(message)
+        return "OK"
     except (FileNotFoundError, ConnectionRefusedError, OSError) as e:
         return "OK (LED server not connected)"
 
@@ -33,8 +32,11 @@ def setLEDs(new_leds: list[tuple[int,int,int,int]]) -> bool:
             raise ValueError("Each LED must be a tuple of four integers (R,G,B,L) between 0 and 255")
     
     leds = new_leds
-    # just send the list as text
-    _send_message(str(leds))
+    # Convert to raw bytes: [r, g, b, l, r, g, b, l, ...]
+    payload = bytearray()
+    for led in leds:
+        payload.extend(led)
+    _send_message(bytes(payload))
     return True
 
 def clearLEDs() -> None:

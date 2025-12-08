@@ -44,7 +44,9 @@ def brightness_hack(l: float, r: int, g: int, b: int) -> tuple[int, int, int]:
 
 def set_framebuf(payload: bytes) -> bool:
     # led count * 4 bytes (r,g,b,l)
-    if len(payload) != SIZE * 4:
+    expected_size = SIZE * 4
+    if len(payload) != expected_size:
+        logger.error(f'Invalid payload size: received {len(payload)} bytes, expected {expected_size} bytes')
         return False
     
     for i in range(SIZE):
