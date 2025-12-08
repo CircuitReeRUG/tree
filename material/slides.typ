@@ -6,6 +6,7 @@
   authors: ("CircuitRee!"),
   title-color: rgb("#F6921D"),
 )
+#set text(font: "Fira Sans")
 
 
 = The code stuff
