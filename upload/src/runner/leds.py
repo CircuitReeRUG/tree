@@ -27,7 +27,6 @@ def change_led(led_num, r, g, b, l) -> bool:
     if led_num < 0 or led_num >= SIZE:
         return False
     pixels[led_num] = brightness_hack(l, r, g, b)
-    pixels.show()
     return True
 
 def get_led_count() -> int:
@@ -57,5 +56,5 @@ def set_framebuf(payload: bytes) -> bool:
         l = payload[i * 4 + 3]
         if not change_led(i, r, g, b, l):
             return False
-    
+    pixels.show()
     return True
