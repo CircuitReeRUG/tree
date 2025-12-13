@@ -33,6 +33,7 @@ def execute_code(code):
         "_getattr_": safer_getattr,
         "_getiter_": default_guarded_getiter,
         "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
+        "_unpack_sequence_": guarded_iter_unpack_sequence,
         "RED": Color.RED, "GREEN": Color.GREEN, "BLUE": Color.BLUE,
         "YELLOW": Color.YELLOW, "CYAN": Color.CYAN, "MAGENTA": Color.MAGENTA,
         "WHITE": Color.WHITE, "ORANGE": Color.ORANGE, "PURPLE": Color.PURPLE,
