@@ -2,6 +2,7 @@ import time
 import sys
 import os
 import json
+import multiprocessing
 
 from idle_animation import start_idle_animation, stop_idle_animation
 from callback import DelayedCallback
@@ -41,6 +42,14 @@ def cleanup_old_logs():
         if os.path.exists(archive_path):
             os.remove(archive_path)
 
+def execute_code_wrapper(code, result_queue):
+    """Wrapper to run execute_code in a separate process"""
+    try:
+        result = execute_code(code)
+        result_queue.put(('success', result))
+    except Exception as e:
+        result_queue.put(('error', str(e)))
+
 def run_job(working_path, log_path, archive_path, meta, job_hash):
     with open(working_path, "r") as f:
         code = f.read()
@@ -56,11 +65,32 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
     
     time.sleep(0.5)
     
-    try:
-        with timeout(TIMEOUT_SECONDS):
-            result = execute_code(code)
-    except Exception as e:
-        result = f"Error: {str(e)}"
+    # Create a queue for the result
+    result_queue = multiprocessing.Queue()
+    
+    # Start the process
+    process = multiprocessing.Process(target=execute_code_wrapper, args=(code, result_queue))
+    process.start()
+    
+    # Wait for timeout
+    process.join(timeout=TIMEOUT_SECONDS)
+    
+    if process.is_alive():
+        # Timeout occurred - kill the process
+        process.terminate()
+        process.join(timeout=1)
+        if process.is_alive():
+            process.kill()
+            process.join()
+        result = f"Error: Job exceeded {TIMEOUT_SECONDS} second timeout"
+    else:
+        # Process finished normally
+        if not result_queue.empty():
+            status, result = result_queue.get()
+            if status == 'error':
+                result = f"Error: {result}"
+        else:
+            result = "Error: Job finished but produced no output"
     
     with open(log_path, 'a') as log_file:
         log_file.write(result)
