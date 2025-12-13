@@ -228,17 +228,6 @@ SIZE: int  # Total number of LEDs in the tree
             }
         });
 
-        // Add custom validation for exposed functions
-        monaco.editor.onDidCreateModel((model) => {
-            if (model.getLanguageId() === 'python') {
-                validatePythonCode(model);
-            }
-        });
-
-        editor.onDidChangeModelContent(() => {
-            validatePythonCode(editor.getModel());
-        });
-
         function validatePythonCode(model) {
             const code = model.getValue();
             const markers = [];
@@ -355,6 +344,24 @@ SIZE: int  # Total number of LEDs in the tree
 
             monaco.editor.setModelMarkers(model, 'python', markers);
         }
+
+        // Create the editor
+        editor = monaco.editor.create(document.getElementById('editor'), {
+            value: '# Write your Python code here\n',
+            language: 'python',
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: false },
+            fontSize: 14,
+            tabSize: 4,
+            insertSpaces: true
+        });
+
+        editor.onDidChangeModelContent(() => {
+            validatePythonCode(editor.getModel());
+        });
+
+        validatePythonCode(editor.getModel());
     });
 
     // Intercept form submit and send editor contents
