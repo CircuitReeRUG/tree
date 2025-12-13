@@ -12,7 +12,9 @@ from RestrictedPython.Guards import (
     safer_getattr,
     full_write_guard,
     guarded_iter_unpack_sequence,
+    guarded_unpack_sequence,
 )
+from RestrictedPython.Eval import default_guarded_getiter
 from RestrictedPython.PrintCollector import PrintCollector
 
 from .exposed import get_exposed_functions
@@ -62,15 +64,15 @@ def execute_code(code: str) -> str:
     
     restricted_globals = {
         '__builtins__': allowed_builtins,
-              '__name__': 'user_code',
+        '__name__': 'user_code',
         '__metaclass__': type,
         
         '_print_': PrintCollector,
         '_getattr_': safer_getattr, 
         '_write_': full_write_guard,
-        '_getiter_': lambda obj: iter(obj),
+        '_getiter_': default_guarded_getiter,
         '_iter_unpack_sequence_': guarded_iter_unpack_sequence,
-        '_unpack_sequence_': guarded_iter_unpack_sequence,
+        '_unpack_sequence_': guarded_unpack_sequence,
         # ----- Colors ------
         'RED': Color.RED,
         'GREEN': Color.GREEN,
