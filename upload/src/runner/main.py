@@ -75,6 +75,8 @@ def execute_code(code: str) -> str:
         '_unpack_sequence_': guarded_iter_unpack_sequence,
         '_getattr_': safer_getattr,
         '_getiter_': default_guarded_getiter,
+        '_iter_': default_guarded_getiter,  # Add this for iteration support
+
         '_print_': PrintCollector,
         '_getitem_': lambda obj, index: obj[index],
         '_write_': lambda obj: obj,
