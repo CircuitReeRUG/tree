@@ -2,11 +2,11 @@ import time
 import sys
 import os
 import json
-
 import subprocess
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from runner import execute_code
+from idle_animation import start_idle_animation, stop_idle_animation
 
 # all files will be added to jobs/ from the flask app
 JOB_DIR = "jobs"
@@ -105,6 +105,8 @@ def worker_loop():
     print("Worker started, monitoring for jobs...")
     metadata = load_metadata()
     
+    start_idle_animation()
+    
     while True:
         # Reload metadata each iteration to catch new jobs
         metadata = load_metadata()
@@ -112,6 +114,8 @@ def worker_loop():
         job_files = sorted([f for f in os.listdir(JOB_DIR) if f.endswith(".py") and not f.endswith("_working.py")])
         
         if job_files:
+            stop_idle_animation()
+            
             job_file = job_files[0] 
             job_path = os.path.join(JOB_DIR, job_file)
             working_path = job_path.replace(".py", "_working.py")
@@ -142,12 +146,12 @@ def worker_loop():
                 # log error
                 with open(log_path, 'a') as log_file:
                     log_file.write("\n" + "=" * 50 + "\n")
-                    log_file.write(f"ERROR: {e}\n")
-                
-            finally:
+                    log_file.write(f"ERROR: {e}\n")                finally:
                 if os.path.exists(working_path):
                     os.remove(working_path)
                     print(f"Job {job_hash} removed from queue.")
+                
+                start_idle_animation()
         
         time.sleep(2)
 
