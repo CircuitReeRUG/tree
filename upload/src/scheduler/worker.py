@@ -2,8 +2,8 @@ import time
 import sys
 import os
 import json
-import signal
 
+import subprocess
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from runner import execute_code
@@ -60,26 +60,32 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
         
         time.sleep(0.5)
         
+        result = subprocess.run(
+            ['python', '-c', f'import sys; sys.path.insert(0, ".."); from runner import execute_code; print(execute_code(sys.stdin.read()))'],
+            input=code,
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT_SECONDS,
+            cwd=os.path.dirname(os.path.abspath(__file__))
+        )
         
-        def timeout_handler(signum, frame):
-            raise TimeoutError(f"Job timed out after {TIMEOUT_SECONDS} seconds")
+        # Log output
+        with open(log_path, 'a') as log_file:
+            log_file.write(result.stdout)
+            log_file.write(result.stderr)
         
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(TIMEOUT_SECONDS)
-        
-        try:
-            output = execute_code(code)
-            signal.alarm(0)
+        if result.returncode == 0:
             with open(log_path, 'a') as log_file:
-                log_file.write(output)
                 log_file.write("\n\nJob completed successfully\n")
-                
-        except TimeoutError as e:
-            signal.alarm(0)
+        else:
             with open(log_path, 'a') as log_file:
-                log_file.write(f"\n\n{str(e)}\n")
-                log_file.write("Job was terminated due to timeout\n")
+                log_file.write(f"\n\nJob failed with return code: {result.returncode}\n")
                 
+    except subprocess.TimeoutExpired:
+        with open(log_path, 'a') as log_file:
+            log_file.write(f"\n\nJob timed out after {TIMEOUT_SECONDS} seconds\n")
+            log_file.write("Job was terminated due to timeout\n")
+    
     except Exception as e:
         error_msg = f"Error processing {job_hash}: {e}"
         print(error_msg)
@@ -93,6 +99,7 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
         if os.path.exists(working_path):
             os.remove(working_path)
             print(f"Job {job_hash} removed from queue.")
+            
                     
 def worker_loop():
     """Continuously checks for new jobs and executes them."""
