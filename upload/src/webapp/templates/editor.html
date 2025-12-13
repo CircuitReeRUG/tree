@@ -347,7 +347,35 @@ SIZE: int  # Total number of LEDs in the tree
 
         // Create the editor
         editor = monaco.editor.create(document.getElementById('editor'), {
-            value: '# Write your Python code here\n',
+            value: `# CircuitRee LED Programming Template
+# Available functions: getLEDCount(), setLEDs(), clearLEDs(), sleep()
+# Available constant: SIZE (total number of LEDs)
+
+# Example: Simple color fade
+num_leds = getLEDCount()
+
+# Create a list of LED states (R, G, B, Luminance)
+# Each value must be between 0-255
+leds = [(255, 0, 0, 100)] * num_leds  # Red color, 100 brightness
+
+# Set all LEDs to red
+setLEDs(leds)
+sleep(1)
+
+# Change to green
+leds = [(0, 255, 0, 100)] * num_leds
+setLEDs(leds)
+sleep(1)
+
+# Change to blue
+leds = [(0, 0, 255, 100)] * num_leds
+setLEDs(leds)
+sleep(1)
+
+# Clear all LEDs
+clearLEDs()
+
+`,
             language: 'python',
             theme: 'vs-dark',
             automaticLayout: true,
