@@ -16,9 +16,7 @@
                 <thead>
                     <tr>
                         <th>Timestamp</th>
-                        <th>Job Hash</th>
                         <th>Username</th>
-                        <th>Filename</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -26,9 +24,7 @@
                     {% for job in jobs %}
                     <tr class="queue-item status-{{ job.status }}" onclick="window.location.href='/job/{{ job.hash }}'">
                         <td>{{ job.timestamp }}</td>
-                        <td><code>{{ job.hash }}</code></td>
                         <td>{{ job.username }}</td>
-                        <td>{{ job.filename }}</td>
                         <td class="status-{{ job.status }}">{{ job.status }}</td>
                     </tr>
                     {% endfor %}

@@ -1,7 +1,7 @@
 import sys
 from .color import Color
 from RestrictedPython import compile_restricted
-from RestrictedPython.Guards import safe_builtins, safer_getattr, guarded_iter_unpack_sequence
+from RestrictedPython.Guards import safe_builtins, safer_getattr, guarded_iter_unpack_sequence, safe_iter
 from RestrictedPython.Eval import default_guarded_getiter
 from RestrictedPython.PrintCollector import PrintCollector
 import math
@@ -14,6 +14,15 @@ def _inplacevar_(op, var, expr):
            "<<=": lambda: var << expr, ">>=": lambda: var >> expr, "|=": lambda: var | expr,
            "^=": lambda: var ^ expr, "&=": lambda: var & expr, "//=": lambda: var // expr}
     return ops.get(op, lambda: var)()
+
+def safe_unpack_sequence(seq, length):
+    """Safely unpack a sequence for tuple unpacking."""
+    if not hasattr(seq, '__iter__'):
+        raise TypeError(f"'{type(seq).__name__}' object is not iterable")
+    result = list(seq)
+    if len(result) != length:
+        raise ValueError(f"not enough values to unpack (expected {length}, got {len(result)})")
+    return result
 
 def execute_code(code):
     byte_code = compile_restricted(code, "<user_code>", "exec")
@@ -32,8 +41,10 @@ def execute_code(code):
         "_print_": PrintCollector,
         "_getattr_": safer_getattr,
         "_getiter_": default_guarded_getiter,
-        "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
-        "_unpack_sequence_": guarded_iter_unpack_sequence,
+        "_iter_unpack_sequence_": safe_unpack_sequence,
+        "_unpack_sequence_": safe_unpack_sequence,
+        "__name__": "restricted_module",
+        "__metaclass__": type,
         "RED": Color.RED, "GREEN": Color.GREEN, "BLUE": Color.BLUE,
         "YELLOW": Color.YELLOW, "CYAN": Color.CYAN, "MAGENTA": Color.MAGENTA,
         "WHITE": Color.WHITE, "ORANGE": Color.ORANGE, "PURPLE": Color.PURPLE,
