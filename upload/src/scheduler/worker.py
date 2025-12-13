@@ -84,7 +84,6 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
     except subprocess.TimeoutExpired:
         with open(log_path, 'a') as log_file:
             log_file.write(f"\n\nJob timed out after {TIMEOUT_SECONDS} seconds\n")
-            log_file.write("Job was terminated due to timeout\n")
     
     except Exception as e:
         error_msg = f"Error processing {job_hash}: {e}"
