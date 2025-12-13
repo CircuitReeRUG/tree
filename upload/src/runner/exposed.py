@@ -15,9 +15,15 @@ def setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool:
     
     # make sure to type check
     for led in new_leds:
-        if (not isinstance(led, tuple) or len(led) != 4 or
-            not all(isinstance(c, int) and 0 <= c <= 255 for c in led)):
-            raise ValueError("Each LED must be a tuple of four integers (R,G,B,L) between 0 and 255")
+        if not isinstance(led, tuple) or len(led) != 4:
+            raise ValueError("Each LED must be a tuple of four integers (R,G,B,L)")
+        r, g, b, brightness = led
+        if not all(isinstance(c, int) for c in led):
+            raise TypeError("All LED values must be integers")
+        if not (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255):
+            raise ValueError("RGB values must be between 0 and 255")
+        if not (0 <= brightness <= 100):
+            raise ValueError("Brightness (L) must be between 0 and 100")
     
     current_leds = new_leds
     # Convert to raw bytes: [r, g, b, l, r, g, b, l, ...]
