@@ -235,6 +235,8 @@ SIZE: int  # Total number of LEDs in the tree
             // Check for common issues with exposed functions
             const lines = code.split('\n');
 
+            lines.forEach((line, idx) => {
+
                 // Check setLEDs usage
                 if (line.includes('setLEDs(')) {
                     // Warn if not using getLEDCount
