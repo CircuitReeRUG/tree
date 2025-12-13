@@ -4,45 +4,37 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='job.css') }}">
 {% endblock %}
 
+{% block title %}Job {{ job_hash }} - CircuiTree{% endblock %}
+
 {% block content %}
 <div class="job-page">
-    <div class="job-header">
-        <h1>{{ filename }}</h1>
-        <div class="job-info">
-            <span>User: {{ username }}</span>
-            <span>Hash: {{ job_hash }}</span>
-            <span>Status: <span id="status" class="status-{{ status }}">{{ status }}</span></span>
-        </div>
+    <div class="header">
+        <h1>Job: {{ filename }}</h1>
+        <p>Submitted by: <strong>{{ username }}</strong></p>
+        <p>Status: <span id="status" class="status-badge {{ status }}">{{ status }}</span></p>
+        <p>Hash: <code>{{ job_hash }}</code></p>
     </div>
-    
-    <div class="output-view">
+
+    <div class="output-section">
         <h2>Output</h2>
         <pre id="output">{{ output if output else 'No output yet...' }}</pre>
     </div>
-    
+
     <div class="actions">
-        <a href="{{ url_for('queue.monitor') }}" class="btn">Back to Queue</a>
-        <a href="{{ url_for('editor_view') }}" class="btn">Write New Code</a>
+        <a href="{{ url_for('queue.monitor') }}" class="btn">View Queue</a>
+        <a href="{{ url_for('editor.editor_view') }}" class="btn">Write New Code</a>
     </div>
 </div>
 
 <script>
-    const statusEl = document.getElementById('status');
-    
-    if (statusEl.textContent.trim() === 'pending' || statusEl.textContent.trim() === 'running') {
-        const poll = setInterval(() => {
-            fetch('/api/job/{{ job_hash }}')
-                .then(r => r.json())
-                .then(data => {
-                    statusEl.textContent = data.status;
-                    statusEl.className = 'status-' + data.status;
-                    document.getElementById('output').textContent = data.output || 'No output yet...';
-                    
-                    if (data.status === 'completed' || data.status === 'not_found') {
-                        clearInterval(poll);
-                    }
-                });
-        }, 2000);
-    }
+    setInterval(() => {
+        fetch('/api/job/{{ job_hash }}')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('status').textContent = data.status;
+                document.getElementById('status').className = 'status-badge ' + data.status;
+                document.getElementById('output').textContent = data.output || 'No output yet...';
+            });
+    }, 2000);
 </script>
 {% endblock %}
