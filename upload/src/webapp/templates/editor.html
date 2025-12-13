@@ -78,7 +78,7 @@
 <div id="editor-page">
     <div id="editor-toolbar">
         <div id="editor-toolbar-left">
-            <form id="editor-form" method="POST" action="{{ url_for('upload_view') }}"
+            <form id="editor-form" method="POST" action="/editor"
                 style="display:flex; gap:8px; align-items:center;">
                 <input type="hidden" name="editor_code" id="editor_code">
                 <input type="text" name="username" placeholder="Username (optional)" maxlength="32">
@@ -242,10 +242,46 @@ setLEDs(states)
 
     // Intercept form submit and send editor contents
     document.getElementById('editor-form').addEventListener('submit', function (e) {
+        e.preventDefault();
         if (!editor) return;
+        
         const code = editor.getValue();
-        const hidden = document.getElementById('editor_code');
-        hidden.value = code;
+        const username = document.querySelector('input[name="username"]').value || 'anonymous';
+        const messageDiv = document.getElementById('message');
+        
+        // Show loading message
+        messageDiv.textContent = 'Submitting job...';
+        messageDiv.style.color = '#CCCCCC';
+        
+        // Send as JSON
+        fetch('/editor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                editor_code: code,
+                username: username
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                messageDiv.textContent = 'Error: ' + data.error;
+                messageDiv.style.color = '#FF6B6B';
+            } else if (data.job_hash) {
+                messageDiv.textContent = 'Job submitted successfully!';
+                messageDiv.style.color = '#4CAF50';
+                // Redirect to job page after a short delay
+                setTimeout(() => {
+                    window.location.href = '/job/' + data.job_hash;
+                }, 1000);
+            }
+        })
+        .catch(error => {
+            messageDiv.textContent = 'Network error: ' + error.message;
+            messageDiv.style.color = '#FF6B6B';
+        });
     });
 
 </script>

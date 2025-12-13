@@ -1,10 +1,9 @@
-from flask import Flask, request, render_template, jsonify, redirect, url_for
+from flask import Flask, request, render_template, jsonify
 import os
 import ast
 import hashlib
 import time
 import json
-from io import BytesIO
 
 app = Flask(__name__)
 
@@ -116,7 +115,6 @@ def job_view(job_hash):
 
 @app.route('/api/job/<job_hash>')
 def job_api(job_hash):
-    """API endpoint for job status polling"""
     status = "completed"
     
     if os.path.exists(JOB_DIR):
@@ -134,105 +132,56 @@ def job_api(job_hash):
     
     return jsonify({"status": status, "output": output})
 
-def __hash_name(file):
-    """Generate hash from file content and timestamp"""
-    file_hash = hashlib.sha256(file.read(8) + str(time.time()).encode()).hexdigest()[:8]
-    file.seek(0)
-    return file_hash
-
-@app.route("/editor")
+@app.route("/editor", methods=["GET", "POST"])
 def editor_view():
-    return render_template("editor.html")
-
-
-class EditorUploadWrapper:
-    """Wrap raw editor code to mimic the subset of FileStorage used by upload_view."""
-    def __init__(self, code: str, username: str = "anonymous", filename: str = "editor.py"):
-        self._buf = BytesIO(code.encode("utf-8"))
-        self.filename = filename
-        self.content_length = len(code.encode("utf-8"))
-
-    def read(self, *args, **kwargs):
-        return self._buf.read(*args, **kwargs)
-
-    def seek(self, *args, **kwargs):
-        return self._buf.seek(*args, **kwargs)
-
-    def save(self, dst_path):
-        # Reset to start then write entire buffer to destination path
-        self._buf.seek(0)
-        with open(dst_path, "wb") as f:
-            f.write(self._buf.read())
-
-
-@app.route("/upload", methods=["GET", "POST"])
-def upload_view():
     if request.method == "POST":
         username = request.form.get("username", "anonymous")
         editor_code = request.form.get("editor_code")
 
-        if editor_code and "file" not in request.files:
-            uploaded_file = EditorUploadWrapper(editor_code, username)
-        else:
-            uploaded_file = request.files.get("file")
-
         # Check username length
         if len(username) > 32:
-            return render_template("upload.html",
-                                   message="Username must be 32 characters or less",
-                                   redirect_to="upload",
-                                   code="error")
+            return jsonify({"error": "Username must be 32 characters or less"}), 400
 
-        if uploaded_file:
-            try:
-                # Read entire content once for validation, then rewind
-                content = uploaded_file.read().decode("utf-8")
-                ast.parse(content)
-                uploaded_file.seek(0)
-            except SyntaxError:
-                return render_template("upload.html",
-                                       message="Uploaded file is not valid Python code",
-                                       redirect_to="upload",
-                                       code="error")
-            except Exception:
-                return render_template("upload.html",
-                                       message="Error processing the uploaded file",
-                                       redirect_to="upload",
-                                       code="error")
+        if not editor_code:
+            return jsonify({"error": "No code provided"}), 400
 
-            if getattr(uploaded_file, "content_length", None) and uploaded_file.content_length > 5 * 1024 * 1024:
-                return render_template("upload.html",
-                                       message="File too large (max 5MB)",
-                                       redirect_to="upload",
-                                       code="error")
+        try:
+            # Validate Python syntax
+            ast.parse(editor_code)
+        except SyntaxError:
+            return jsonify({"error": "Code is not valid Python"}), 400
+        except Exception:
+            return jsonify({"error": "Error processing the code"}), 400
 
-            original_name = uploaded_file.filename if getattr(uploaded_file, "filename", None) else "unnamed.py"
-            job_hash = __hash_name(uploaded_file)
-            
-            # Save metadata
-            metadata = load_metadata()
-            metadata[job_hash] = {
-                "filename": original_name,
-                "username": username,
-                "timestamp": time.time()
-            }
-            save_metadata(metadata)
-            
-            # Save file with hash-only name
-            os.makedirs(JOB_DIR, exist_ok=True)
-            file_path = os.path.join(JOB_DIR, f"{job_hash}.py")
-            uploaded_file.save(file_path)
+        # Check code size (max 5MB)
+        if len(editor_code.encode("utf-8")) > 5 * 1024 * 1024:
+            return jsonify({"error": "Code too large (max 5MB)"}), 400
 
-            return redirect(url_for("job_view", job_hash=job_hash))
-        else:
-            return render_template("upload.html",
-                                   message="No file uploaded",
-                                   redirect_to="upload",
-                                   code="error")
-    else:
-        return render_template("upload.html")
+        # Generate job hash
+        job_hash = hashlib.sha256(
+            editor_code[:8].encode() + str(time.time()).encode()
+        ).hexdigest()[:8]
+        
+        # Save metadata
+        metadata = load_metadata()
+        metadata[job_hash] = {
+            "filename": "editor.py",
+            "username": username,
+            "timestamp": time.time()
+        }
+        save_metadata(metadata)
+        
+        # Save code to job file
+        os.makedirs(JOB_DIR, exist_ok=True)
+        file_path = os.path.join(JOB_DIR, f"{job_hash}.py")
+        with open(file_path, "w") as f:
+            f.write(editor_code)
+
+        return jsonify({"job_hash": job_hash})
+    
+    return render_template("editor.html")
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("editor.html")
 
