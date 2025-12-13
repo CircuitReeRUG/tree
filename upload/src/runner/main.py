@@ -108,8 +108,8 @@ def execute_code(code: str) -> str:
         
         return result #pyright: ignore[reportReturnType]
     except Exception as e:
-        return f"Error: {e}"
-
+        import traceback
+        return f"Error: {e}\n\nTraceback:\n{traceback.format_exc()}"
 # DEBUG
 def __debug_cli():
     file_path = sys.argv[1]
