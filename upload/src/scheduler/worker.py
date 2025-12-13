@@ -2,7 +2,8 @@ import time
 import sys
 import os
 import json
-import subprocess
+import signal
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from runner import execute_code
@@ -41,10 +42,10 @@ def cleanup_old_logs():
             if os.path.exists(archive_path):
                 os.remove(archive_path)
 
-def run_job(job_file, job_path, working_path, log_path, archive_path, meta, job_hash):
+def run_job(working_path, log_path, archive_path, meta, job_hash):
     """Run the job using the code in the job_file."""
     try:
-        with open(job_file, "r") as f:
+        with open(working_path, "r") as f:
             code = f.read()
         
         # copy to archive
@@ -59,31 +60,26 @@ def run_job(job_file, job_path, working_path, log_path, archive_path, meta, job_
         
         time.sleep(0.5)
         
-        result = subprocess.run(
-            ['python', '-m', 'runner.main', job_path],
-            cwd='..',
-            capture_output=True,
-            text=True,
-            timeout=TIMEOUT_SECONDS
-        )
         
-        # Log output
-        with open(log_path, 'a') as log_file:
-            log_file.write(result.stdout)
-            log_file.write(result.stderr)
+        def timeout_handler(signum, frame):
+            raise TimeoutError(f"Job timed out after {TIMEOUT_SECONDS} seconds")
         
-        if result.returncode == 0:
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(TIMEOUT_SECONDS)
+        
+        try:
+            output = execute_code(code)
+            signal.alarm(0)
             with open(log_path, 'a') as log_file:
+                log_file.write(output)
                 log_file.write("\n\nJob completed successfully\n")
-        else:
-            with open(log_path, 'a') as log_file:
-                log_file.write(f"\n\nJob failed with return code: {result.returncode}\n")
                 
-    except subprocess.TimeoutExpired:
-        with open(log_path, 'a') as log_file:
-            log_file.write(f"\n\nJob timed out after {TIMEOUT_SECONDS} seconds\n")
-            log_file.write("Job was terminated due to timeout\n")
-    
+        except TimeoutError as e:
+            signal.alarm(0)
+            with open(log_path, 'a') as log_file:
+                log_file.write(f"\n\n{str(e)}\n")
+                log_file.write("Job was terminated due to timeout\n")
+                
     except Exception as e:
         error_msg = f"Error processing {job_hash}: {e}"
         print(error_msg)
@@ -97,7 +93,7 @@ def run_job(job_file, job_path, working_path, log_path, archive_path, meta, job_
         if os.path.exists(working_path):
             os.remove(working_path)
             print(f"Job {job_hash} removed from queue.")
-
+                    
 def worker_loop():
     """Continuously checks for new jobs and executes them."""
     print("Worker started, monitoring for jobs...")
@@ -125,7 +121,7 @@ def worker_loop():
                 os.rename(job_path, working_path)
                 print(f"Processing job: {job_hash} ({meta['filename']} by {meta['username']})")
                 
-                run_job(job_file, job_path, working_path, log_path, archive_path, meta, job_hash)
+                run_job(working_path, log_path, archive_path, meta, job_hash)
                 
                 print(f"Job {job_hash} completed.")
                 
