@@ -1,9 +1,10 @@
-from flask import Blueprint, request, render_template, jsonify
+from flask import Blueprint, request, render_template, jsonify, redirect, url_for
 import os
 import ast
 import hashlib
 import time
 import json
+from datetime import datetime
 
 editor_bp = Blueprint('editor', __name__)
 
@@ -51,3 +52,35 @@ def editor_view():
         return jsonify({"job_hash": job_hash})
     
     return render_template("editor.html")
+
+@editor_bp.route('/submit', methods=['POST'])
+def submit():
+    username = request.form.get("username", "anonymous")[:32]
+    code = request.form.get("editor_code")
+
+    if not code:
+        return jsonify({"error": "No code"}), 400
+
+    try:
+        ast.parse(code)
+    except:
+        return jsonify({"error": "Invalid Python"}), 400
+
+    job_hash = hashlib.sha256((code[:8] + str(time.time())).encode()).hexdigest()[:8]
+    filename = f"{job_hash}.py"
+    filepath = os.path.join(JOB_DIR, filename)
+
+    with open(filepath, "w") as f:
+        f.write(code)
+
+    job_queue = {}
+    job_queue[job_hash] = {
+        'username': username,
+        'filename': filename,
+        'filepath': filepath,
+        'status': 'pending',
+        'output': '',
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+
+    return redirect(url_for('editor.index'))

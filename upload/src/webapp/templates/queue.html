@@ -11,25 +11,25 @@
         <p class="notice">Note: Only the most recent 20 completed jobs are kept. Older logs are automatically removed.</p>
     </div>
     <div id="queue-container">
-        {% if queue %}
+        {% if jobs %}
             <table>
                 <thead>
                     <tr>
-                        <th>Position</th>
+                        <th>Timestamp</th>
+                        <th>Job Hash</th>
+                        <th>Username</th>
                         <th>Filename</th>
                         <th>Status</th>
-                        <th>User</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in queue %}
-                    <tr class="queue-item {{ item.status }}">
-                        <td>{{ loop.index }}</td>
-                        <td>{{ item.filename }}</td>
-                        <td><span class="status-badge">{{ item.status }}</span></td>
-                        <td>{{ item.user }}</td>
-                        <td><a href="{{ url_for('job.job_view', job_hash=item.hash) }}" class="view-link">View</a></td>
+                    {% for job in jobs %}
+                    <tr class="queue-item" onclick="window.location.href='/job/{{ job.hash }}'">
+                        <td>{{ job.timestamp }}</td>
+                        <td><code>{{ job.hash }}</code></td>
+                        <td>{{ job.username }}</td>
+                        <td>{{ job.filename }}</td>
+                        <td class="status-{{ job.status }}">{{ job.status }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

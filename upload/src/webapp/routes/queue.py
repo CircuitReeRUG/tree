@@ -47,7 +47,16 @@ def get_queue_data():
 
 @queue_bp.route('/queue')
 def monitor():
-    return render_template("queue.html", queue=get_queue_data())
+    jobs = []
+    for job_hash, job_data in job_queue.items():
+        jobs.append({
+            'hash': job_hash,
+            'username': job_data['username'],
+            'filename': job_data['filename'],
+            'status': job_data['status'],
+            'timestamp': job_data.get('timestamp', 'N/A')
+        })
+    return render_template('queue.html', jobs=jobs)
 
 @queue_bp.route('/api/queue')
 def queue_api():
