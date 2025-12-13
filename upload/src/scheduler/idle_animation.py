@@ -14,7 +14,6 @@ idle_thread = None
 fade_in_frames = 100  # Number of frames to fade in
 
 def idle_animation():
-    """Waiting animation - scanning pattern to show system is ready"""
     global idle_running
     led_count = get_led_count()
     frame = 0
@@ -25,49 +24,30 @@ def idle_animation():
         try:
             payload = bytearray()
             
-            # Fade in effect - gradually increase intensity
+            # Fade in effect
             fade_factor = min(1.0, frame / fade_in_frames)
             
-            # Scanner effect - like KITT from Knight Rider
-            scanner_pos = frame % (led_count * 2)
-            if scanner_pos >= led_count:
-                scanner_pos = (led_count * 2 - 1) - scanner_pos
-            
-            tail_length = min(12, led_count // 3)
-            
+            # Pulsing wave effect
             for i in range(led_count):
-                distance = abs(i - scanner_pos)
+                # Create a wave that travels down the tree
+                wave = math.sin((i / led_count * 4 * math.pi) + (frame / 20))
+                brightness = int((wave * 0.5 + 0.5) * 100 * fade_factor)
                 
-                if distance < tail_length:
-                    # Blue scanner with fade
-                    brightness = int(100 * (1 - distance / tail_length) * fade_factor)
-                    r, g, b = int(0 * fade_factor), int(150 * fade_factor), int(255 * fade_factor)
-                else:
-                    # Dim background that fades in
-                    r, g, b = int(20 * fade_factor), int(20 * fade_factor), int(30 * fade_factor)
-                    brightness = int(100 * fade_factor)
+                # Cool blue-purple gradient
+                r = int(80 * fade_factor)
+                g = int(50 * fade_factor)
+                b = int(200 * fade_factor)
                 
                 payload.extend([r, g, b, brightness])
             
             set_framebuf(bytes(payload))
             frame += 1
-            time.sleep(0.03)  # Faster for more obvious movement
+            time.sleep(0.05)
         except Exception as e:
             logger.error(f"Idle animation error: {e}", exc_info=True)
             break
     
     logger.info("Idle animation loop ended")
-
-def start_idle_animation():
-    """Start the idle animation in background"""
-    global idle_running, idle_thread
-    if not idle_running:
-        idle_running = True
-        idle_thread = threading.Thread(target=idle_animation, daemon=True)
-        idle_thread.start()
-        logger.info("Idle animation started")
-    else:
-        logger.debug("Idle animation already running")
 
 def stop_idle_animation():
     """Stop the idle animation"""
