@@ -4,8 +4,9 @@ import os
 def create_app():
     app = Flask(__name__)
     
-    os.makedirs("../scheduler/jobs", exist_ok=True)
-    os.makedirs("../scheduler/logs", exist_ok=True)
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'scheduler'))
+    os.makedirs(os.path.join(BASE_DIR, "jobs"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "logs"), exist_ok=True)
     
     from .routes.queue import queue_bp
     from .routes.job import job_bp

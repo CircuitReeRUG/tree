@@ -4,9 +4,10 @@ import json
 
 queue_bp = Blueprint('queue', __name__)
 
-JOB_DIR = "../../scheduler/jobs"
-LOG_DIR = "../../scheduler/logs"
-METADATA_FILE = "../../scheduler/metadata.json"
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'scheduler'))
+JOB_DIR = os.path.join(BASE_DIR, "jobs")
+LOG_DIR = os.path.join(BASE_DIR, "logs")
+METADATA_FILE = os.path.join(BASE_DIR, "metadata.json")
 
 def load_metadata():
     if os.path.exists(METADATA_FILE):
