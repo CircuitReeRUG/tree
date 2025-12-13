@@ -47,8 +47,9 @@ def execute_code(code):
         result = restricted_globals.get("_print", lambda: "")()
         return result if result.strip() else "No prints invoked, but ur program executed ok (we hope)"
     except Exception as e:
-        return f"Error: {e}"
-
+        import traceback
+        return f"Error: {e}\n\nFull traceback:\n{traceback.format_exc()}"
+    
 def __debug_cli():
     with open(sys.argv[1], "r") as f:
         print(execute_code(f.read()))
