@@ -170,13 +170,6 @@ SIZE: int  # Total number of LEDs in the tree
                         documentation: 'Sleep for the specified number of seconds (max 10s).\n\nArgs:\n  seconds: Number of seconds to sleep (max 10)\n\nRaises:\n  ValueError: If seconds > 10',
                         detail: '(seconds: float) -> None'
                     },
-                    {
-                        label: 'SIZE',
-                        kind: monaco.languages.CompletionItemKind.Constant,
-                        insertText: 'SIZE',
-                        documentation: 'Total number of LEDs in the tree.',
-                        detail: 'int'
-                    }
                 ];
                 return { suggestions };
             }
@@ -213,12 +206,6 @@ SIZE: int  # Total number of LEDs in the tree
                             { value: 'Sleep for the specified number of seconds (max 10s).\n\n**Args:**\n- `seconds`: Number of seconds to sleep (max 10)\n\n**Raises:** ValueError if seconds > 10' }
                         ]
                     },
-                    'SIZE': {
-                        contents: [
-                            { value: '```python\nSIZE: int\n```' },
-                            { value: 'Total number of LEDs in the tree.' }
-                        ]
-                    }
                 };
 
                 if (hoverDocs[word.word]) {
@@ -240,7 +227,7 @@ SIZE: int  # Total number of LEDs in the tree
                 // Check setLEDs usage
                 if (line.includes('setLEDs(')) {
                     // Warn if not using getLEDCount
-                    if (!code.includes('getLEDCount()') && !code.includes('SIZE')) {
+                    if (!code.includes('getLEDCount()')) {
                         const col = line.indexOf('setLEDs') + 1;
                         markers.push({
                             severity: monaco.MarkerSeverity.Warning,
@@ -248,7 +235,7 @@ SIZE: int  # Total number of LEDs in the tree
                             startColumn: col,
                             endLineNumber: idx + 1,
                             endColumn: col + 7,
-                            message: 'Consider using getLEDCount() or SIZE to ensure correct LED list size'
+                            message: 'Consider using getLEDCount() to ensure correct LED list size'
                         });
                     }
 
@@ -330,7 +317,6 @@ SIZE: int  # Total number of LEDs in the tree
         editor = monaco.editor.create(document.getElementById('editor'), {
             value: `# CircuitRee LED Programming Template
 # Available functions: getLEDCount(), setLEDs(), clearLEDs(), sleep()
-# Available constant: SIZE (total number of LEDs)
 
 # Example: Simple color fade
 num_leds = getLEDCount()
