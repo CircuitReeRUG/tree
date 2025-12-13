@@ -23,3 +23,30 @@ def save_metadata(metadata):
 @editor_bp.route("/")
 def index():
     return render_template("editor.html")
+
+@editor_bp.route("/editor", methods=["GET", "POST"])
+def editor_view():
+    if request.method == "POST":
+        username = request.form.get("username", "anonymous")[:32]
+        code = request.form.get("editor_code")
+
+        if not code:
+            return jsonify({"error": "No code"}), 400
+
+        try:
+            ast.parse(code)
+        except:
+            return jsonify({"error": "Invalid Python"}), 400
+
+        job_hash = hashlib.sha256((code[:8] + str(time.time())).encode()).hexdigest()[:8]
+        
+        metadata = load_metadata()
+        metadata[job_hash] = {"filename": "editor.py", "username": username, "timestamp": time.time()}
+        save_metadata(metadata)
+        
+        with open(os.path.join(JOB_DIR, f"{job_hash}.py"), "w") as f:
+            f.write(code)
+
+        return jsonify({"job_hash": job_hash})
+    
+    return render_template("editor.html")

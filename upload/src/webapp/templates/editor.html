@@ -249,10 +249,6 @@ setLEDs(states)
         const username = document.querySelector('input[name="username"]').value || 'anonymous';
         const messageDiv = document.getElementById('message');
         
-        // Show loading message
-        messageDiv.textContent = 'Submitting job...';
-        messageDiv.style.color = '#CCCCCC';
-        
         // Send as JSON
         fetch('/editor', {
             method: 'POST',
