@@ -270,9 +270,6 @@ setLEDs(states)
                 messageDiv.textContent = 'Error: ' + data.error;
                 messageDiv.style.color = '#FF6B6B';
             } else if (data.job_hash) {
-                messageDiv.textContent = 'Job submitted successfully!';
-                messageDiv.style.color = '#4CAF50';
-                // Redirect to job page after a short delay
                 setTimeout(() => {
                     window.location.href = '/job/' + data.job_hash;
                 }, 1000);
