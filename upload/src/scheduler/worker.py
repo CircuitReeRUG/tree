@@ -146,12 +146,15 @@ def worker_loop():
                 # log error
                 with open(log_path, 'a') as log_file:
                     log_file.write("\n" + "=" * 50 + "\n")
-                    log_file.write(f"ERROR: {e}\n")                finally:
+                    log_file.write(f"ERROR: {e}\n")
+            
+            finally:
                 if os.path.exists(working_path):
                     os.remove(working_path)
                     print(f"Job {job_hash} removed from queue.")
-                
-                start_idle_animation()
+            
+            # Restart idle animation after job completes (with fade in)
+            start_idle_animation()
         
         time.sleep(2)
 

@@ -7,6 +7,7 @@ import threading
 # Idle animation state
 idle_running = False
 idle_thread = None
+fade_in_frames = 100  # Number of frames to fade in
 
 def idle_animation():
     """Waiting animation - scanning pattern to show system is ready"""
@@ -17,6 +18,9 @@ def idle_animation():
     while idle_running:
         try:
             payload = bytearray()
+            
+            # Fade in effect - gradually increase intensity
+            fade_factor = min(1.0, frame / fade_in_frames)
             
             # Scanner effect - like KITT from Knight Rider
             scanner_pos = frame % (led_count * 2)
@@ -30,12 +34,12 @@ def idle_animation():
                 
                 if distance < tail_length:
                     # Blue scanner with fade
-                    brightness = int(100 * (1 - distance / tail_length))
-                    r, g, b = 0, 150, 255  # Cyan/blue color
+                    brightness = int(100 * (1 - distance / tail_length) * fade_factor)
+                    r, g, b = int(0 * fade_factor), int(150 * fade_factor), int(255 * fade_factor)
                 else:
-                    # Dim background
-                    r, g, b = 20, 20, 30
-                    brightness = 100
+                    # Dim background that fades in
+                    r, g, b = int(20 * fade_factor), int(20 * fade_factor), int(30 * fade_factor)
+                    brightness = int(100 * fade_factor)
                 
                 payload.extend([r, g, b, brightness])
             
