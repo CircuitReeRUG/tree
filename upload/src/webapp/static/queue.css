@@ -30,6 +30,14 @@ tr.queue-item:hover {
     background-color: #f5f5f5;
 }
 
+tr.queue-item.status-running {
+    background-color: #FFF4E6;
+}
+
+tr.queue-item.status-running:hover {
+    background-color: #FFE8CC;
+}
+
 .empty-queue {
     text-align: center;
     color: #878787;

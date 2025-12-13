@@ -120,9 +120,23 @@ def setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool:
 def clearLEDs() -> None:
     """Clear all LEDs (set to off/black)."""
     pass
+
+def sleep(seconds: float) -> None:
+    """
+    Sleep for the specified number of seconds (max 10s).
+    
+    Args:
+        seconds: Number of seconds to sleep (max 10)
+    
+    Raises:
+        ValueError: If seconds > 10
+    """
+    pass
+
+SIZE: int  # Total number of LEDs in the tree
 `;
 
-        // Configure Python language features
+        // Configure Python language features with autocomplete
         monaco.languages.registerCompletionItemProvider('python', {
             provideCompletionItems: (model, position) => {
                 const suggestions = [
@@ -130,56 +144,88 @@ def clearLEDs() -> None:
                         label: 'getLEDCount',
                         kind: monaco.languages.CompletionItemKind.Function,
                         insertText: 'getLEDCount()',
-                        documentation: 'Returns the total number of LEDs in the tree'
+                        documentation: 'Returns the total number of LEDs in the tree.\n\nReturns:\n  int: Number of LEDs',
+                        detail: '() -> int'
                     },
                     {
                         label: 'setLEDs',
                         kind: monaco.languages.CompletionItemKind.Function,
                         insertText: 'setLEDs(${1:led_states})',
                         insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-                        documentation: 'Set LED states: list of (R, G, B, Luminance) tuples'
+                        documentation: 'Set LED states for the entire tree.\n\nArgs:\n  new_leds: List of (R, G, B, Luminance) tuples where each value is 0-255\n\nReturns:\n  bool: True if successful\n\nRaises:\n  ValueError: If list size doesn\'t match tree size',
+                        detail: '(new_leds: list[tuple[int, int, int, int]]) -> bool'
                     },
                     {
                         label: 'clearLEDs',
                         kind: monaco.languages.CompletionItemKind.Function,
                         insertText: 'clearLEDs()',
-                        documentation: 'Clear all LEDs (set to off)'
+                        documentation: 'Clear all LEDs (set to off/black).',
+                        detail: '() -> None'
+                    },
+                    {
+                        label: 'sleep',
+                        kind: monaco.languages.CompletionItemKind.Function,
+                        insertText: 'sleep(${1:seconds})',
+                        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                        documentation: 'Sleep for the specified number of seconds (max 10s).\n\nArgs:\n  seconds: Number of seconds to sleep (max 10)\n\nRaises:\n  ValueError: If seconds > 10',
+                        detail: '(seconds: float) -> None'
+                    },
+                    {
+                        label: 'SIZE',
+                        kind: monaco.languages.CompletionItemKind.Constant,
+                        insertText: 'SIZE',
+                        documentation: 'Total number of LEDs in the tree.',
+                        detail: 'int'
                     }
                 ];
                 return { suggestions };
             }
         });
 
-        // Create editor with enhanced settings
-        editor = monaco.editor.create(document.getElementById('editor'), {
-            value: `# Example: Control the LED tree
-led_count = getLEDCount()
-states = [(255, 255, 255, 100) for _ in range(led_count)]
-setLEDs(states)
-`,
-            language: 'python',
-            theme: 'vs-dark',
-            automaticLayout: true,
-            minimap: { enabled: false },
-            fontSize: 14,
-            lineNumbers: 'on',
-            roundedSelection: false,
-            scrollBeyondLastLine: false,
-            readOnly: false,
-            cursorStyle: 'line',
-            // Enable linting and validation
-            quickSuggestions: {
-                other: true,
-                comments: false,
-                strings: false
-            },
-            parameterHints: { enabled: true },
-            suggestOnTriggerCharacters: true,
-            acceptSuggestionOnCommitCharacter: true,
-            tabCompletion: 'on',
-            wordBasedSuggestions: true,
-            formatOnPaste: true,
-            formatOnType: true
+        // Add hover provider for documentation
+        monaco.languages.registerHoverProvider('python', {
+            provideHover: (model, position) => {
+                const word = model.getWordAtPosition(position);
+                if (!word) return null;
+
+                const hoverDocs = {
+                    'getLEDCount': {
+                        contents: [
+                            { value: '```python\ndef getLEDCount() -> int\n```' },
+                            { value: 'Returns the total number of LEDs in the tree.' }
+                        ]
+                    },
+                    'setLEDs': {
+                        contents: [
+                            { value: '```python\ndef setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool\n```' },
+                            { value: 'Set LED states for the entire tree.\n\n**Args:**\n- `new_leds`: List of (R, G, B, Luminance) tuples where each value is 0-255\n\n**Returns:** True if successful\n\n**Raises:** ValueError if list size doesn\'t match tree size' }
+                        ]
+                    },
+                    'clearLEDs': {
+                        contents: [
+                            { value: '```python\ndef clearLEDs() -> None\n```' },
+                            { value: 'Clear all LEDs (set to off/black).' }
+                        ]
+                    },
+                    'sleep': {
+                        contents: [
+                            { value: '```python\ndef sleep(seconds: float) -> None\n```' },
+                            { value: 'Sleep for the specified number of seconds (max 10s).\n\n**Args:**\n- `seconds`: Number of seconds to sleep (max 10)\n\n**Raises:** ValueError if seconds > 10' }
+                        ]
+                    },
+                    'SIZE': {
+                        contents: [
+                            { value: '```python\nSIZE: int\n```' },
+                            { value: 'Total number of LEDs in the tree.' }
+                        ]
+                    }
+                };
+
+                if (hoverDocs[word.word]) {
+                    return { contents: hoverDocs[word.word].contents };
+                }
+                return null;
+            }
         });
 
         // Add custom validation for exposed functions
@@ -201,38 +247,109 @@ setLEDs(states)
             const lines = code.split('\n');
 
             lines.forEach((line, idx) => {
-                // Check setLEDs usage
-                if (line.includes('setLEDs(') && !line.includes('getLEDCount()')) {
-                    const match = line.match(/setLEDs\s*\(\s*\[.*?\]\s*\)/);
-                    if (match) {
-                        // Check if they're creating a list literal without checking size
-                        if (!code.includes('getLEDCount()') && !code.includes('led_count')) {
+                // Check for undefined functions (not in exposed functions)
+                const functionCallMatch = line.match(/(\w+)\s*\(/g);
+                if (functionCallMatch) {
+                    functionCallMatch.forEach(call => {
+                        const funcName = call.replace(/\s*\($/, '');
+                        const exposedFuncs = ['getLEDCount', 'setLEDs', 'clearLEDs', 'sleep', 'range', 'len', 'print', 'list', 'tuple', 'str', 'int', 'float'];
+                        if (!exposedFuncs.includes(funcName) && !line.includes('def ' + funcName)) {
+                            const col = line.indexOf(funcName) + 1;
                             markers.push({
-                                severity: monaco.MarkerSeverity.Warning,
+                                severity: monaco.MarkerSeverity.Error,
                                 startLineNumber: idx + 1,
-                                startColumn: 1,
+                                startColumn: col,
                                 endLineNumber: idx + 1,
-                                endColumn: line.length + 1,
-                                message: 'Consider using getLEDCount() to ensure correct LED list size'
+                                endColumn: col + funcName.length,
+                                message: `'${funcName}' is not defined. Available functions: getLEDCount, setLEDs, clearLEDs, sleep`
                             });
                         }
+                    });
+                }
+
+                // Check setLEDs usage
+                if (line.includes('setLEDs(')) {
+                    // Warn if not using getLEDCount
+                    if (!code.includes('getLEDCount()') && !code.includes('SIZE')) {
+                        const col = line.indexOf('setLEDs') + 1;
+                        markers.push({
+                            severity: monaco.MarkerSeverity.Warning,
+                            startLineNumber: idx + 1,
+                            startColumn: col,
+                            endLineNumber: idx + 1,
+                            endColumn: col + 7,
+                            message: 'Consider using getLEDCount() or SIZE to ensure correct LED list size'
+                        });
+                    }
+
+                    // Check tuple format
+                    const tupleMatch = line.match(/\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+                    if (tupleMatch) {
+                        const values = [parseInt(tupleMatch[1]), parseInt(tupleMatch[2]), parseInt(tupleMatch[3]), parseInt(tupleMatch[4])];
+                        values.forEach((val, i) => {
+                            if (val > 255) {
+                                markers.push({
+                                    severity: monaco.MarkerSeverity.Error,
+                                    startLineNumber: idx + 1,
+                                    startColumn: 1,
+                                    endLineNumber: idx + 1,
+                                    endColumn: line.length + 1,
+                                    message: `LED ${['R', 'G', 'B', 'Luminance'][i]} value ${val} exceeds maximum of 255`
+                                });
+                            }
+                        });
                     }
                 }
 
-                // Check for tuple format in setLEDs
-                if (line.includes('setLEDs(')) {
-                    if (line.includes('[') && !line.match(/\[\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\]/)) {
-                        if (!line.includes('for ') && !line.includes('range(')) {
-                            markers.push({
-                                severity: monaco.MarkerSeverity.Info,
-                                startLineNumber: idx + 1,
-                                startColumn: 1,
-                                endLineNumber: idx + 1,
-                                endColumn: line.length + 1,
-                                message: 'setLEDs expects tuples of (R, G, B, Luminance) with values 0-255'
-                            });
-                        }
+                // Check sleep duration
+                const sleepMatch = line.match(/sleep\s*\(\s*(\d+(?:\.\d+)?)\s*\)/);
+                if (sleepMatch) {
+                    const duration = parseFloat(sleepMatch[1]);
+                    if (duration > 10) {
+                        const col = line.indexOf('sleep') + 1;
+                        markers.push({
+                            severity: monaco.MarkerSeverity.Error,
+                            startLineNumber: idx + 1,
+                            startColumn: col,
+                            endLineNumber: idx + 1,
+                            endColumn: line.length + 1,
+                            message: `sleep duration ${duration}s exceeds maximum of 10s`
+                        });
                     }
+                }
+
+                // Check for common Python syntax errors
+                if (line.trim().startsWith('if ') && !line.trim().endsWith(':')) {
+                    markers.push({
+                        severity: monaco.MarkerSeverity.Error,
+                        startLineNumber: idx + 1,
+                        startColumn: 1,
+                        endLineNumber: idx + 1,
+                        endColumn: line.length + 1,
+                        message: 'Missing colon at end of if statement'
+                    });
+                }
+
+                if (line.trim().startsWith('for ') && !line.trim().endsWith(':')) {
+                    markers.push({
+                        severity: monaco.MarkerSeverity.Error,
+                        startLineNumber: idx + 1,
+                        startColumn: 1,
+                        endLineNumber: idx + 1,
+                        endColumn: line.length + 1,
+                        message: 'Missing colon at end of for statement'
+                    });
+                }
+
+                if (line.trim().startsWith('def ') && !line.trim().endsWith(':')) {
+                    markers.push({
+                        severity: monaco.MarkerSeverity.Error,
+                        startLineNumber: idx + 1,
+                        startColumn: 1,
+                        endLineNumber: idx + 1,
+                        endColumn: line.length + 1,
+                        message: 'Missing colon at end of function definition'
+                    });
                 }
             });
 

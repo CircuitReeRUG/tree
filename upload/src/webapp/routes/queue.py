@@ -32,7 +32,8 @@ def get_queue_data():
                 "status": "running" if "_working" in job_file else "pending",
                 "user": meta["username"],
                 "hash": file_hash,
-                "timestamp": timestamp_str
+                "timestamp": timestamp_str,
+                "timestamp_raw": timestamp
             })
     
     if os.path.exists(LOG_DIR):
@@ -49,8 +50,12 @@ def get_queue_data():
                 "status": "completed",
                 "user": meta["username"],
                 "hash": job_hash,
-                "timestamp": timestamp_str
+                "timestamp": timestamp_str,
+                "timestamp_raw": timestamp
             })
+    
+    # Sort by timestamp (newest first)
+    queue_items.sort(key=lambda x: x.get('timestamp_raw', 0), reverse=True)
     
     return queue_items
 
