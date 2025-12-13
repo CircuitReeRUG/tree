@@ -12,14 +12,13 @@ class DelayedCallback:
         self.last_poke = time.time()
         if self.timer and self.timer.is_alive():
             return
-        self.timer = threading.Thread(target=self._wait_and_fire, daemon=True)
+        self.timer = threading.Thread(target=self._wait, daemon=True)
         self.timer.start()
     
-    def _wait_and_fire(self):
+    def _wait(self):
         time.sleep(self.delay)
         if time.time() - self.last_poke >= self.delay:
             self.callback()
-        self.timer = None
     
     def cancel(self):
         self.last_poke = time.time() + self.delay * 2
