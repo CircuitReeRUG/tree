@@ -144,7 +144,6 @@ def execute_code(code: str) -> str:
 # DEBUG
 def __debug_cli():
     file_path = sys.argv[1]
-    language = "python"
     with open(file_path, "r") as f:
         code = f.read()
     

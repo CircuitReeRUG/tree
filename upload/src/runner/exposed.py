@@ -10,7 +10,6 @@ def getLEDCount() -> int:
     
 def setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool:
     global current_leds
-    time.sleep(0.05)  # Small delay for LED updates
     if len(new_leds) != SIZE:
         raise ValueError("LED list size does not match Tree size")
     # make sure to type check
@@ -29,7 +28,6 @@ def setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool:
 
 def clearLEDs() -> None:
     global current_leds
-    time.sleep(0.05)
     setLEDs([(0, 0, 0, 0)] * SIZE)
 
 def sleep(seconds: float) -> None:
