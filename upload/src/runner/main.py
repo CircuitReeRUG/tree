@@ -66,6 +66,7 @@ def execute_code(code: str) -> str:
         'classmethod': classmethod,
         'super': super,
         'object': object,
+        'range': range,
     })
     
     restricted_globals = {
