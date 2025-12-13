@@ -10,7 +10,6 @@ from RestrictedPython.Eval import default_guarded_getiter
 from RestrictedPython.Guards import (
     guarded_iter_unpack_sequence, 
     safer_getattr,
-    safe_iter,
     safe_builtins
 )
 from .exposed import get_exposed_functions
@@ -74,8 +73,7 @@ def execute_code(code: str) -> str:
         '_iter_unpack_sequence_': guarded_iter_unpack_sequence,
         '_unpack_sequence_': guarded_iter_unpack_sequence,
         '_getattr_': safer_getattr,
-        '_getiter_': safe_iter,
-        '_iter_': safe_iter,
+        '_getiter_': default_guarded_getiter,
         '_print_': PrintCollector,
         '_getitem_': lambda obj, index: obj[index],
         '_write_': lambda obj: obj,
@@ -96,7 +94,6 @@ def execute_code(code: str) -> str:
         'OFF': Color.OFF,
         'math': __import__('math'),
         'random': __import__('random'),
-        'time': __import__('time'),
     }
     
     # add exposed functions
