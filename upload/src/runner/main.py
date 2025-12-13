@@ -17,6 +17,9 @@ from RestrictedPython.Guards import (
 from RestrictedPython.Eval import default_guarded_getiter
 from RestrictedPython.PrintCollector import PrintCollector
 
+import math
+import random
+
 from .exposed import get_exposed_functions
 
 
@@ -86,8 +89,8 @@ def execute_code(code: str) -> str:
         'PURPLE': Color.PURPLE,
         'PINK': Color.PINK,
         'OFF': Color.OFF,
-        'math': __import__('math'),
-        'random': __import__('random'),
+        'math': math,
+        'random': random
     }
     
     # add exposed functions
