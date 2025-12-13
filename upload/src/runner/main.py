@@ -67,6 +67,7 @@ def execute_code(code: str) -> str:
         '__name__': 'user_code',
         '__metaclass__': type,
         '_getitem_': lambda obj, index: obj[index],
+        '_inplacevar_': lambda op, x, y: op(x, y), 
         '_print_': PrintCollector,
         '_getattr_': safer_getattr, 
         '_write_': full_write_guard,
