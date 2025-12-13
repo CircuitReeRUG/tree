@@ -70,7 +70,7 @@ def execute_code(code: str) -> str:
         '_write_': full_write_guard,
         '_getiter_': lambda obj: iter(obj),
         '_iter_unpack_sequence_': guarded_iter_unpack_sequence,
-        
+        '_unpack_sequence_': guarded_iter_unpack_sequence,
         # ----- Colors ------
         'RED': Color.RED,
         'GREEN': Color.GREEN,
