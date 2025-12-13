@@ -26,7 +26,7 @@ def setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool:
             raise ValueError("Brightness (L) must be between 0 and 100")
     
     current_leds = new_leds
-    # Convert to raw bytes: [r, g, b, l, r, g, b, l, ...]
+    
     payload = bytearray()
     for led in current_leds:
         payload.extend(led)

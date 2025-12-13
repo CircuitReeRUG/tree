@@ -13,7 +13,7 @@ LOG_DIR = "logs"
 ARCHIVE_DIR = "archive"
 METADATA_FILE = "metadata.json"
 TIMEOUT_SECONDS = int(os.environ.get('JOB_TIMEOUT', 45))
-IDLE_DELAY = 20
+IDLE_DELAY = int(os.environ.get('IDLE_ANIMATION_DELAY', 5))
 os.makedirs(JOB_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(ARCHIVE_DIR, exist_ok=True)
@@ -59,7 +59,7 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
         time.sleep(0.5)
         
         result = subprocess.run(
-            ['python', '-c', f'import sys; sys.path.insert(0, ".."); from runner import execute_code; print(execute_code(sys.stdin.read()))'],
+            ['python', '-m', 'runner'],
             input=code,
             capture_output=True,
             text=True,

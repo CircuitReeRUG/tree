@@ -5,13 +5,11 @@ import logging
 from runner.leds import set_framebuf, get_led_count
 import threading
 
-# Setup logger
 logger = logging.getLogger(__name__)
 
-# Idle animation state
 idle_running = False
 idle_thread = None
-fade_in_frames = 100  # Number of frames to fade in
+fade_in_frames = 100
 
 def idle_animation():
     global idle_running
