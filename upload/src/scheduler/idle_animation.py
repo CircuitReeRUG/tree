@@ -9,42 +9,39 @@ idle_running = False
 idle_thread = None
 
 def idle_animation():
-    """Gentle breathing rainbow effect when idle"""
+    """Waiting animation - scanning pattern to show system is ready"""
     global idle_running
     led_count = get_led_count()
     frame = 0
     
     while idle_running:
         try:
-            # Breathing effect with slow rainbow
-            pulse = (math.sin(frame * 0.05) + 1) / 2  # 0-1
-            brightness = int(pulse * 50 + 10)  # 10-60 brightness
-            
             payload = bytearray()
+            
+            # Scanner effect - like KITT from Knight Rider
+            scanner_pos = frame % (led_count * 2)
+            if scanner_pos >= led_count:
+                scanner_pos = (led_count * 2 - 1) - scanner_pos
+            
+            tail_length = min(12, led_count // 3)
+            
             for i in range(led_count):
-                hue = (frame * 2 + i * 360 / led_count) % 360
-                # Simple HSV to RGB
-                sector = int(hue / 60) % 6
-                frac = (hue % 60) / 60.0
+                distance = abs(i - scanner_pos)
                 
-                if sector == 0:
-                    r, g, b = 255, int(255 * frac), 0
-                elif sector == 1:
-                    r, g, b = int(255 * (1 - frac)), 255, 0
-                elif sector == 2:
-                    r, g, b = 0, 255, int(255 * frac)
-                elif sector == 3:
-                    r, g, b = 0, int(255 * (1 - frac)), 255
-                elif sector == 4:
-                    r, g, b = int(255 * frac), 0, 255
+                if distance < tail_length:
+                    # Blue scanner with fade
+                    brightness = int(100 * (1 - distance / tail_length))
+                    r, g, b = 0, 150, 255  # Cyan/blue color
                 else:
-                    r, g, b = 255, 0, int(255 * (1 - frac))
+                    # Dim background
+                    r, g, b = 20, 20, 30
+                    brightness = 100
                 
                 payload.extend([r, g, b, brightness])
             
             set_framebuf(bytes(payload))
             frame += 1
-            time.sleep(0.05)
+            time.sleep(0.03)  # Faster for more obvious movement
         except Exception as e:
             print(f"Idle animation error: {e}")
             break

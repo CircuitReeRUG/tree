@@ -21,7 +21,7 @@ def __find_pin(pin: int):
 
 SIZE = int(os.environ.get('TREE_LEDS', 16))
 GPIO_PIN = __find_pin(int(os.environ.get('LED_GPIO_PIN', 18)))
-pixels = neopixel.NeoPixel(GPIO_PIN, SIZE, brightness=0.5, auto_write=False)  # pyright: ignore[reportArgumentType]
+pixels = neopixel.NeoPixel(GPIO_PIN, SIZE, brightness=0.3, auto_write=False)  # pyright: ignore[reportArgumentType]
 
 def get_led_count() -> int:
     return SIZE
