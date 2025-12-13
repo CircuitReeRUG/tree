@@ -49,6 +49,17 @@ def idle_animation():
     
     logger.info("Idle animation loop ended")
 
+def start_idle_animation():
+    """Start the idle animation in background"""
+    global idle_running, idle_thread
+    if not idle_running:
+        idle_running = True
+        idle_thread = threading.Thread(target=idle_animation, daemon=True)
+        idle_thread.start()
+        logger.info("Idle animation started")
+    else:
+        logger.debug("Idle animation already running")
+
 def stop_idle_animation():
     """Stop the idle animation"""
     global idle_running
