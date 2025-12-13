@@ -3,6 +3,7 @@ import sys
 import os
 import json
 import subprocess
+import threading
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from runner import execute_code
@@ -14,9 +15,35 @@ LOG_DIR = "logs"
 ARCHIVE_DIR = "archive"
 METADATA_FILE = "metadata.json"
 TIMEOUT_SECONDS = int(os.environ.get('JOB_TIMEOUT', 45))
+IDLE_DELAY = 20  # Seconds to wait before starting idle animation
 os.makedirs(JOB_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(ARCHIVE_DIR, exist_ok=True)
+
+last_activity_time = time.time()
+idle_timer = None
+
+def delayed_start_idle():
+    """Start idle animation after delay"""
+    global idle_timer
+    time.sleep(IDLE_DELAY)
+    # Check if we're still inactive
+    if time.time() - last_activity_time >= IDLE_DELAY:
+        start_idle_animation()
+    idle_timer = None
+
+def schedule_idle_animation():
+    """Schedule idle animation to start after delay"""
+    global idle_timer, last_activity_time
+    last_activity_time = time.time()
+    
+    # Cancel any existing timer
+    if idle_timer and idle_timer.is_alive():
+        return  # Timer already running
+    
+    # Start new timer
+    idle_timer = threading.Thread(target=delayed_start_idle, daemon=True)
+    idle_timer.start()
 
 def load_metadata():
     """Load metadata from JSON file"""
@@ -105,7 +132,8 @@ def worker_loop():
     print("Worker started, monitoring for jobs...")
     metadata = load_metadata()
     
-    start_idle_animation()
+    # Schedule initial idle animation
+    schedule_idle_animation()
     
     while True:
         # Reload metadata each iteration to catch new jobs
@@ -115,6 +143,9 @@ def worker_loop():
         
         if job_files:
             stop_idle_animation()
+            
+            global last_activity_time
+            last_activity_time = time.time()
             
             job_file = job_files[0] 
             job_path = os.path.join(JOB_DIR, job_file)
@@ -153,8 +184,8 @@ def worker_loop():
                     os.remove(working_path)
                     print(f"Job {job_hash} removed from queue.")
             
-            # Restart idle animation after job completes (with fade in)
-            start_idle_animation()
+            # Schedule idle animation to start after 20 seconds of inactivity
+            schedule_idle_animation()
         
         time.sleep(2)
 
