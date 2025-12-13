@@ -29,7 +29,7 @@
                         <td>{{ item.filename }}</td>
                         <td><span class="status-badge">{{ item.status }}</span></td>
                         <td>{{ item.user }}</td>
-                        <td><a href="{{ url_for('job_view', job_hash=item.hash) }}" class="view-link">View</a></td>
+                        <td><a href="{{ url_for('queue.job_view', job_hash=item.hash) }}" class="view-link">View</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -38,6 +38,6 @@
             <p class="empty-queue">Queue is empty</p>
         {% endif %}
     </div>
-    <a href="{{ url_for('editor_view') }}" class="upload-link">Write New Code</a>
+    <a href="{{ url_for('queue.editor_view') }}" class="upload-link">Write New Code</a>
 </div>
 {% endblock %}
