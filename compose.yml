@@ -12,6 +12,7 @@ services:
       - JOB_TIMEOUT=45
     volumes:
       - ./upload/src:/app
+      - ./archives:/app/scheduler/archive
     privileged: true
     devices:
       - /dev/gpiomem:/dev/gpiomem
