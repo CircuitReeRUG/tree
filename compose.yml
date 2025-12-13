@@ -7,7 +7,7 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - TREE_LEDS=16
+      - TREE_LEDS=100
       - LED_GPIO_PIN=18
     volumes:
       - ./upload/src:/app
