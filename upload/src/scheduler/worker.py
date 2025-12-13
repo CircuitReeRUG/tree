@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from idle_animation import start_idle_animation, stop_idle_animation
 from callback import DelayedCallback
+from runner.main import execute_code
 
 JOB_DIR = "jobs"
 LOG_DIR = "logs"
@@ -58,14 +59,7 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
         
         time.sleep(0.5)
         
-        result = subprocess.run(
-            ['python', '-m', 'runner'],
-            input=code,
-            capture_output=True,
-            text=True,
-            timeout=TIMEOUT_SECONDS,
-            cwd=os.path.dirname(os.path.abspath(__file__))
-        )
+        result = execute_code(code)
         
         with open(log_path, 'a') as log_file:
             log_file.write(result.stdout)
