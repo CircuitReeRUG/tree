@@ -4,20 +4,6 @@
     padding: 20px;
 }
 
-.job-header {
-    margin-bottom: 30px;
-}
-
-.job-info {
-    display: flex;
-    gap: 30px;
-    margin-top: 15px;
-    padding: 15px;
-    background-color: #f5f5f5;
-    border-left: 4px solid #F6921D;
-    font-size: 14px;
-}
-
 .status-pending {
     color: #878787;
 }
@@ -37,11 +23,7 @@
     font-weight: bold;
 }
 
-.output-view {
-    margin-bottom: 20px;
-}
-
-.output-view h2 {
+.output-section h2 {
     margin-bottom: 15px;
     font-size: 18px;
     color: #F6921D;
