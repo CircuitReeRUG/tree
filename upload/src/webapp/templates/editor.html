@@ -235,27 +235,6 @@ SIZE: int  # Total number of LEDs in the tree
             // Check for common issues with exposed functions
             const lines = code.split('\n');
 
-            lines.forEach((line, idx) => {
-                // Check for undefined functions (not in exposed functions)
-                const functionCallMatch = line.match(/(\w+)\s*\(/g);
-                if (functionCallMatch) {
-                    functionCallMatch.forEach(call => {
-                        const funcName = call.replace(/\s*\($/, '');
-                        const exposedFuncs = ['getLEDCount', 'setLEDs', 'clearLEDs', 'sleep', 'range', 'len', 'print', 'list', 'tuple', 'str', 'int', 'float'];
-                        if (!exposedFuncs.includes(funcName) && !line.includes('def ' + funcName)) {
-                            const col = line.indexOf(funcName) + 1;
-                            markers.push({
-                                severity: monaco.MarkerSeverity.Error,
-                                startLineNumber: idx + 1,
-                                startColumn: col,
-                                endLineNumber: idx + 1,
-                                endColumn: col + funcName.length,
-                                message: `'${funcName}' is not defined. Available functions: getLEDCount, setLEDs, clearLEDs, sleep`
-                            });
-                        }
-                    });
-                }
-
                 // Check setLEDs usage
                 if (line.includes('setLEDs(')) {
                     // Warn if not using getLEDCount
