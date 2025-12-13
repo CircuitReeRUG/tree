@@ -1,27 +1,16 @@
-import socket
 import os
 import inspect
 import time
+from . import leds
 
-SIZE:int = int(os.environ.get("TREE_LEDS", "1"))
-leds = [(0,0,0,0)] * SIZE 
-SERVER_ADDRESS = os.environ.get('LED_SOCKET_PATH', '/tmp/led_socket')
-
-def _send_message(message: bytes) -> str:
-    time.sleep(0.1)  # Rate limiting
-    try:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
-            client.connect(SERVER_ADDRESS)
-            client.sendall(message)
-        return "OK"
-    except (FileNotFoundError, ConnectionRefusedError, OSError) as e:
-        return "OK (LED server not connected)"
+SIZE: int = leds.SIZE
+current_leds = [(0, 0, 0, 0)] * SIZE 
 
 def getLEDCount() -> int:
     return SIZE
     
-def setLEDs(new_leds: list[tuple[int,int,int,int]]) -> bool:
-    global leds
+def setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool:
+    global current_leds
     time.sleep(0.05)  # Small delay for LED updates
     if len(new_leds) != SIZE:
         raise ValueError("LED list size does not match Tree size")
@@ -31,18 +20,18 @@ def setLEDs(new_leds: list[tuple[int,int,int,int]]) -> bool:
             not all(isinstance(c, int) and 0 <= c <= 255 for c in led)):
             raise ValueError("Each LED must be a tuple of four integers (R,G,B,L) between 0 and 255")
     
-    leds = new_leds
+    current_leds = new_leds
     # Convert to raw bytes: [r, g, b, l, r, g, b, l, ...]
     payload = bytearray()
-    for led in leds:
+    for led in current_leds:
         payload.extend(led)
-    _send_message(bytes(payload))
+    leds.set_framebuf(bytes(payload))
     return True
 
 def clearLEDs() -> None:
-    global leds
+    global current_leds
     time.sleep(0.05)
-    setLEDs( [(0,0,0,0)] * SIZE )
+    setLEDs([(0, 0, 0, 0)] * SIZE)
 
 def sleep(seconds: float) -> None:
     """Sleep for the given number of seconds."""

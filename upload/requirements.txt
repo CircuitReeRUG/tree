@@ -1,2 +1,5 @@
 flask
 RestrictedPython
+adafruit-circuitpython-neopixel==6.3.11
+rpi-ws281x==5.0.0
+RPi.GPIO

@@ -1,45 +1,17 @@
 services:
-  controller:
+  circuitree:
     build:
-      context: ./controller
+      context: .
       dockerfile: Dockerfile
-    container_name: circuitree-controller
-    environment:
-      - LED_SOCKET_PATH=/tmp/led_socket
-      - TREE_LEDS=16
-      - LED_GPIO_PIN=18
-    volumes:
-      - led-socket:/tmp
-    # Uncomment for actual Raspberry Pi hardware
-    # privileged: true
-    # devices:
-    #   - /dev/gpiomem:/dev/gpiomem
-    restart: unless-stopped
-    networks:
-      - circuitree
-
-  upload:
-    build:
-      context: ./upload
-      dockerfile: Dockerfile
-    container_name: circuitree-upload
+    container_name: circuitree
     ports:
       - "5000:5000"
     environment:
       - TREE_LEDS=16
-      - LED_SOCKET_PATH=/tmp/led_socket
+      - LED_GPIO_PIN=18
     volumes:
-      - ./upload:/app
-      - led-socket:/tmp
-    depends_on:
-      - controller
+      - ./upload/src:/app
+    privileged: true
+    devices:
+      - /dev/gpiomem:/dev/gpiomem
     restart: unless-stopped
-    networks:
-      - circuitree
-
-volumes:
-  led-socket:
-
-networks:
-  circuitree:
-    driver: bridge

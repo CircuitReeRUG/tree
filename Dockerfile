@@ -10,9 +10,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY upload/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY src/ .
+COPY upload/src ./
+COPY upload/start.py ./start.py
 
-CMD ["python", "-u", "main.py"]
+CMD ["python", "-u", "start.py"]
