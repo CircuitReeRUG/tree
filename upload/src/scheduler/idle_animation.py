@@ -1,8 +1,12 @@
 """Idle animation for LED tree when no jobs are running"""
 import time
 import math
+import logging
 from runner.leds import set_framebuf, get_led_count
 import threading
+
+# Setup logger
+logger = logging.getLogger(__name__)
 
 # Idle animation state
 idle_running = False
@@ -14,6 +18,8 @@ def idle_animation():
     global idle_running
     led_count = get_led_count()
     frame = 0
+    
+    logger.info("Idle animation loop started")
     
     while idle_running:
         try:
@@ -47,8 +53,10 @@ def idle_animation():
             frame += 1
             time.sleep(0.03)  # Faster for more obvious movement
         except Exception as e:
-            print(f"Idle animation error: {e}")
+            logger.error(f"Idle animation error: {e}", exc_info=True)
             break
+    
+    logger.info("Idle animation loop ended")
 
 def start_idle_animation():
     """Start the idle animation in background"""
@@ -57,7 +65,9 @@ def start_idle_animation():
         idle_running = True
         idle_thread = threading.Thread(target=idle_animation, daemon=True)
         idle_thread.start()
-        print("Idle animation started")
+        logger.info("Idle animation started")
+    else:
+        logger.debug("Idle animation already running")
 
 def stop_idle_animation():
     """Stop the idle animation"""
@@ -66,4 +76,6 @@ def stop_idle_animation():
         idle_running = False
         if idle_thread:
             idle_thread.join(timeout=1)
-        print("Idle animation stopped")
+        logger.info("Idle animation stopped")
+    else:
+        logger.debug("Idle animation already stopped")
