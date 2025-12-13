@@ -5,6 +5,8 @@ import json
 
 from idle_animation import start_idle_animation, stop_idle_animation
 from callback import DelayedCallback
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from runner.main import execute_code
 
 JOB_DIR = "jobs"

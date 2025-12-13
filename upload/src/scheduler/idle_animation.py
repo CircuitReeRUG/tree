@@ -2,8 +2,14 @@
 import time
 import math
 import logging
-from runner.leds import set_framebuf, get_led_count
 import threading
+import sys,os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from runner.exposed import setLEDs, getLEDCount
+from runner.color import Color
+
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +19,14 @@ fade_in_frames = 100
 
 def idle_animation():
     global idle_running
-    led_count = get_led_count()
+    led_count = getLEDCount()
     frame = 0
     
     logger.info("Idle animation loop started")
     
     while idle_running:
         try:
-            payload = bytearray()
+            states = []
             
             # Fade in effect
             fade_factor = min(1.0, frame / fade_in_frames)
@@ -36,9 +42,9 @@ def idle_animation():
                 g = int(50 * fade_factor)
                 b = int(200 * fade_factor)
                 
-                payload.extend([r, g, b, brightness])
+                states.append((r, g, b, brightness))
             
-            set_framebuf(bytes(payload))
+            setLEDs(states)
             frame += 1
             time.sleep(0.05)
         except Exception as e:
