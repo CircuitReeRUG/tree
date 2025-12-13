@@ -59,7 +59,7 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
     try:
         with timeout(TIMEOUT_SECONDS):
             result = execute_code(code)
-    except TimeoutException as e:
+    except Exception as e:
         result = f"Error: {str(e)}"
     
     with open(log_path, 'a') as log_file:
