@@ -7,19 +7,80 @@ logger = logging.getLogger(__name__)
 
 from RestrictedPython import compile_restricted, safe_globals, PrintCollector, limited_builtins
 from RestrictedPython.Eval import default_guarded_getiter
-from RestrictedPython.Guards import guarded_iter_unpack_sequence, safer_getattr
+from RestrictedPython.Guards import (
+    guarded_iter_unpack_sequence, 
+    safer_getattr,
+    safe_iter,
+    safe_builtins
+)
 from .exposed import get_exposed_functions
 
 def execute_code(code: str) -> str:
     byte_code = compile_restricted(code, '<user_code>', 'exec')
     
+    # Merge safe_builtins with limited_builtins to get more functionality
+    allowed_builtins = {**limited_builtins, **safe_builtins}
+    
+    # Allow more builtins for full Python syntax support
+    allowed_builtins.update({
+        'enumerate': enumerate,
+        'zip': zip,
+        'map': map,
+        'filter': filter,
+        'sorted': sorted,
+        'reversed': reversed,
+        'sum': sum,
+        'min': min,
+        'max': max,
+        'abs': abs,
+        'round': round,
+        'pow': pow,
+        'divmod': divmod,
+        'isinstance': isinstance,
+        'issubclass': issubclass,
+        'hasattr': hasattr,
+        'getattr': getattr,
+        'setattr': setattr,
+        'delattr': delattr,
+        'callable': callable,
+        'chr': chr,
+        'ord': ord,
+        'hex': hex,
+        'oct': oct,
+        'bin': bin,
+        'format': format,
+        'hash': hash,
+        'id': id,
+        'type': type,
+        'dir': dir,
+        'vars': vars,
+        'locals': locals,
+        'globals': globals,
+        'slice': slice,
+        'bytes': bytes,
+        'bytearray': bytearray,
+        'memoryview': memoryview,
+        'complex': complex,
+        'frozenset': frozenset,
+        'property': property,
+        'staticmethod': staticmethod,
+        'classmethod': classmethod,
+        'super': super,
+        'object': object,
+    })
+    
     restricted_globals = {
-        '__builtins__': limited_builtins,
+        '__builtins__': allowed_builtins,
         '_iter_unpack_sequence_': guarded_iter_unpack_sequence,
+        '_unpack_sequence_': guarded_iter_unpack_sequence,
         '_getattr_': safer_getattr,
-        '_getiter_': default_guarded_getiter,
+        '_getiter_': safe_iter,
+        '_iter_': safe_iter,
         '_print_': PrintCollector,
         '_getitem_': lambda obj, index: obj[index],
+        '_write_': lambda obj: obj,
+        '__name__': 'user_code',
+        '__metaclass__': type,
 
         # ----- Colors ------
         'RED': Color.RED,
@@ -35,6 +96,7 @@ def execute_code(code: str) -> str:
         'OFF': Color.OFF,
         'math': __import__('math'),
         'random': __import__('random'),
+        'time': __import__('time'),
     }
     
     # add exposed functions

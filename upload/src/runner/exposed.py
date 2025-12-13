@@ -1,4 +1,3 @@
-import os
 import inspect
 import time
 from . import leds
