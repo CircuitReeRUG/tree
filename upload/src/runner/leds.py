@@ -21,7 +21,7 @@ def __find_pin(pin: int):
 
 SIZE = int(os.environ.get('TREE_LEDS', 16))
 GPIO_PIN = __find_pin(int(os.environ.get('LED_GPIO_PIN', 18)))
-pixels = neopixel.NeoPixel(GPIO_PIN, SIZE)  # pyright: ignore[reportArgumentType]
+pixels = neopixel.NeoPixel(GPIO_PIN, SIZE, brightness=0.5)  # pyright: ignore[reportArgumentType]
 
 def change_led(led_num, r, g, b, l) -> bool:
     if led_num < 0 or led_num >= SIZE:
