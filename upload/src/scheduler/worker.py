@@ -3,21 +3,22 @@ import sys
 import os
 import json
 import subprocess
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from idle_animation import start_idle_animation, stop_idle_animation
-from callback import DelayedCallback
-from runner.main import execute_code
+SRC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 JOB_DIR = "jobs"
 LOG_DIR = "logs"
 ARCHIVE_DIR = "archive"
 METADATA_FILE = "metadata.json"
 TIMEOUT_SECONDS = int(os.environ.get('JOB_TIMEOUT', 45))
-IDLE_DELAY = int(os.environ.get('IDLE_ANIMATION_DELAY', 5))
+IDLE_DELAY = int(os.environ.get('IDLE_ANIMATION_DELAY', 10))
 os.makedirs(JOB_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(ARCHIVE_DIR, exist_ok=True)
+
+sys.path.insert(0, SRC_DIR)
+from idle_animation import start_idle_animation, stop_idle_animation
+from callback import DelayedCallback
 
 idle_starter = DelayedCallback(IDLE_DELAY, start_idle_animation)
 
@@ -59,86 +60,67 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
         
         time.sleep(0.5)
         
-        result = execute_code(code)
+        result = subprocess.run(
+            [sys.executable, '-m', 'runner.main', working_path],
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT_SECONDS,
+            cwd=SRC_DIR,
+            env={**os.environ}
+        )
         
         with open(log_path, 'a') as log_file:
-            log_file.write(result.stdout)
-            log_file.write(result.stderr)
+            if result.stdout:
+                log_file.write(result.stdout)
+            if result.stderr:
+                log_file.write("\nERRORS:\n" + result.stderr)
         
         if result.returncode == 0:
             with open(log_path, 'a') as log_file:
-                log_file.write("\n\nJob completed successfully\n")
+                log_file.write("\n\nJob completed\n")
         else:
             with open(log_path, 'a') as log_file:
-                log_file.write(f"\n\nJob failed with return code: {result.returncode}\n")
+                log_file.write(f"\n\nJob failed (exit code {result.returncode})\n")
                 
     except subprocess.TimeoutExpired:
         with open(log_path, 'a') as log_file:
-            log_file.write(f"\n\nJob timed out after {TIMEOUT_SECONDS} seconds\n")
+            log_file.write(f"\n\nTimed out after {TIMEOUT_SECONDS}s\n")
     
     except Exception as e:
-        error_msg = f"Error processing {job_hash}: {e}"
-        print(error_msg)
-        
         with open(log_path, 'a') as log_file:
-            log_file.write("\n" + "=" * 50 + "\n")
-            log_file.write(f"ERROR: {e}\n")
+            log_file.write(f"\n\nERROR: {e}\n")
     
     finally:
         if os.path.exists(working_path):
             os.remove(working_path)
-            print(f"Job {job_hash} removed from queue.")
             
-                    
 def worker_loop():
-    print("Worker started, monitoring for jobs...")
-    metadata = load_metadata()
+    print("Worker started")
     
     idle_starter.poke()
     
     while True:
         metadata = load_metadata()
-        
         job_files = sorted([f for f in os.listdir(JOB_DIR) if f.endswith(".py") and not f.endswith("_working.py")])
         
         if job_files:
             stop_idle_animation()
             idle_starter.cancel()
             
-            job_file = job_files[0] 
+            job_file = job_files[0]
             job_path = os.path.join(JOB_DIR, job_file)
             working_path = job_path.replace(".py", "_working.py")
-            
             job_hash = job_file.replace(".py", "")
             meta = metadata.get(job_hash, {"filename": "unknown", "username": "unknown"})
             
             log_path = os.path.join(LOG_DIR, f"{job_hash}.log")
             archive_path = os.path.join(ARCHIVE_DIR, f"{job_hash}.py")
             
-            try:
-                os.rename(job_path, working_path)
-                print(f"Processing job: {job_hash} ({meta['filename']} by {meta['username']})")
-                
-                run_job(working_path, log_path, archive_path, meta, job_hash)
-                
-                print(f"Job {job_hash} completed.")
-                
-                time.sleep(1)
-                
-                cleanup_old_logs()
-                
-            except Exception as e:
-                error_msg = f"Error processing {job_hash}: {e}"
-                print(error_msg)
-                
-                with open(log_path, 'a') as log_file:
-                    log_file.write("\n" + "=" * 50 + "\n")
-                    log_file.write(f"ERROR: {e}\n")
+            os.rename(job_path, working_path)
+            print(f"Running: {job_hash}")
             
-            finally:
-                if os.path.exists(working_path):
-                    os.remove(working_path)
-                    print(f"Job {job_hash} removed from queue.")
+            run_job(working_path, log_path, archive_path, meta, job_hash)
+            cleanup_old_logs()
             
             idle_starter.poke()
         
