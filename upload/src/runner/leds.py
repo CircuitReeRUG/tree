@@ -34,7 +34,7 @@ def brightness_hack(l: float, r: int, g: int, b: int) -> tuple[int, int, int]:
     r = int(r * factor)
     g = int(g * factor)
     b = int(b * factor)
-    return (r, g, b)
+    return (g, r, b)
 
 def set_framebuf(payload: bytes) -> bool:
     # led count * 4 bytes (r,g,b,l)

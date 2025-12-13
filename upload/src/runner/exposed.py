@@ -12,6 +12,7 @@ def setLEDs(new_leds: list[tuple[int, int, int, int]]) -> bool:
     global current_leds
     if len(new_leds) != SIZE:
         raise ValueError("LED list size does not match Tree size")
+    
     # make sure to type check
     for led in new_leds:
         if (not isinstance(led, tuple) or len(led) != 4 or

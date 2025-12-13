@@ -3,57 +3,30 @@ import sys
 import os
 import json
 import subprocess
-import threading
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from runner import execute_code
 from idle_animation import start_idle_animation, stop_idle_animation
+from callback import DelayedCallback
 
-# all files will be added to jobs/ from the flask app
 JOB_DIR = "jobs"
 LOG_DIR = "logs"
 ARCHIVE_DIR = "archive"
 METADATA_FILE = "metadata.json"
 TIMEOUT_SECONDS = int(os.environ.get('JOB_TIMEOUT', 45))
-IDLE_DELAY = 20  # Seconds to wait before starting idle animation
+IDLE_DELAY = 20
 os.makedirs(JOB_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(ARCHIVE_DIR, exist_ok=True)
 
-last_activity_time = time.time()
-idle_timer = None
-
-def delayed_start_idle():
-    """Start idle animation after delay"""
-    global idle_timer
-    time.sleep(IDLE_DELAY)
-    # Check if we're still inactive
-    if time.time() - last_activity_time >= IDLE_DELAY:
-        start_idle_animation()
-    idle_timer = None
-
-def schedule_idle_animation():
-    """Schedule idle animation to start after delay"""
-    global idle_timer, last_activity_time
-    last_activity_time = time.time()
-    
-    # Cancel any existing timer
-    if idle_timer and idle_timer.is_alive():
-        return  # Timer already running
-    
-    # Start new timer
-    idle_timer = threading.Thread(target=delayed_start_idle, daemon=True)
-    idle_timer.start()
+idle_starter = DelayedCallback(IDLE_DELAY, start_idle_animation)
 
 def load_metadata():
-    """Load metadata from JSON file"""
     if os.path.exists(METADATA_FILE):
         with open(METADATA_FILE, 'r') as f:
             return json.load(f)
     return {}
 
 def cleanup_old_logs():
-    """Remove oldest logs and archived code if more than 20 exist"""
     if not os.path.exists(LOG_DIR):
         return
     
@@ -70,12 +43,10 @@ def cleanup_old_logs():
                 os.remove(archive_path)
 
 def run_job(working_path, log_path, archive_path, meta, job_hash):
-    """Run the job using the code in the job_file."""
     try:
         with open(working_path, "r") as f:
             code = f.read()
         
-        # copy to archive
         with open(archive_path, 'w') as archive:
             archive.write(code)
         
@@ -96,7 +67,6 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
             cwd=os.path.dirname(os.path.abspath(__file__))
         )
         
-        # Log output
         with open(log_path, 'a') as log_file:
             log_file.write(result.stdout)
             log_file.write(result.stderr)
@@ -116,7 +86,6 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
         error_msg = f"Error processing {job_hash}: {e}"
         print(error_msg)
         
-        # log error
         with open(log_path, 'a') as log_file:
             log_file.write("\n" + "=" * 50 + "\n")
             log_file.write(f"ERROR: {e}\n")
@@ -128,24 +97,19 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
             
                     
 def worker_loop():
-    """Continuously checks for new jobs and executes them."""
     print("Worker started, monitoring for jobs...")
     metadata = load_metadata()
     
-    # Schedule initial idle animation
-    schedule_idle_animation()
+    idle_starter.poke()
     
     while True:
-        # Reload metadata each iteration to catch new jobs
         metadata = load_metadata()
         
         job_files = sorted([f for f in os.listdir(JOB_DIR) if f.endswith(".py") and not f.endswith("_working.py")])
         
         if job_files:
             stop_idle_animation()
-            
-            global last_activity_time
-            last_activity_time = time.time()
+            idle_starter.cancel()
             
             job_file = job_files[0] 
             job_path = os.path.join(JOB_DIR, job_file)
@@ -158,7 +122,6 @@ def worker_loop():
             archive_path = os.path.join(ARCHIVE_DIR, f"{job_hash}.py")
             
             try:
-                # working
                 os.rename(job_path, working_path)
                 print(f"Processing job: {job_hash} ({meta['filename']} by {meta['username']})")
                 
@@ -174,7 +137,6 @@ def worker_loop():
                 error_msg = f"Error processing {job_hash}: {e}"
                 print(error_msg)
                 
-                # log error
                 with open(log_path, 'a') as log_file:
                     log_file.write("\n" + "=" * 50 + "\n")
                     log_file.write(f"ERROR: {e}\n")
@@ -184,8 +146,7 @@ def worker_loop():
                     os.remove(working_path)
                     print(f"Job {job_hash} removed from queue.")
             
-            # Schedule idle animation to start after 20 seconds of inactivity
-            schedule_idle_animation()
+            idle_starter.poke()
         
         time.sleep(2)
 
