@@ -22,7 +22,7 @@
                 </thead>
                 <tbody>
                     {% for job in jobs %}
-                    <tr class="queue-item status-{{ job.status }}" onclick="window.location.href='/job/{{ job.hash }}'">
+                    <tr class="queue-item" onclick="window.location.href='/job/{{ job.hash }}'">
                         <td>{{ job.timestamp }}</td>
                         <td>{{ job.username }}</td>
                         <td class="status-{{ job.status }}">{{ job.status }}</td>
