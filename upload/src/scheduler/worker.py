@@ -2,6 +2,7 @@ import time
 import sys
 import os
 import json
+import subprocess
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from runner import execute_code
@@ -11,6 +12,7 @@ JOB_DIR = "jobs"
 LOG_DIR = "logs"
 ARCHIVE_DIR = "archive"
 METADATA_FILE = "metadata.json"
+TIMEOUT_SECONDS = int(os.environ.get('JOB_TIMEOUT', 45))
 os.makedirs(JOB_DIR, exist_ok=True)
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(ARCHIVE_DIR, exist_ok=True)
@@ -39,6 +41,63 @@ def cleanup_old_logs():
             if os.path.exists(archive_path):
                 os.remove(archive_path)
 
+def run_job(job_file, job_path, working_path, log_path, archive_path, meta, job_hash):
+    """Run the job using the code in the job_file."""
+    try:
+        with open(job_file, "r") as f:
+            code = f.read()
+        
+        # copy to archive
+        with open(archive_path, 'w') as archive:
+            archive.write(code)
+        
+        with open(log_path, 'w') as log:
+            log.write(f"Job: {meta['filename']}\n")
+            log.write(f"User: {meta['username']}\n")
+            log.write(f"Hash: {job_hash}\n")
+            log.write("=" * 50 + "\n\n")
+        
+        time.sleep(0.5)
+        
+        result = subprocess.run(
+            ['python', '-m', 'runner.main', job_path],
+            cwd='..',
+            capture_output=True,
+            text=True,
+            timeout=TIMEOUT_SECONDS
+        )
+        
+        # Log output
+        with open(log_path, 'a') as log_file:
+            log_file.write(result.stdout)
+            log_file.write(result.stderr)
+        
+        if result.returncode == 0:
+            with open(log_path, 'a') as log_file:
+                log_file.write("\n\nJob completed successfully\n")
+        else:
+            with open(log_path, 'a') as log_file:
+                log_file.write(f"\n\nJob failed with return code: {result.returncode}\n")
+                
+    except subprocess.TimeoutExpired:
+        with open(log_path, 'a') as log_file:
+            log_file.write(f"\n\nJob timed out after {TIMEOUT_SECONDS} seconds\n")
+            log_file.write("Job was terminated due to timeout\n")
+    
+    except Exception as e:
+        error_msg = f"Error processing {job_hash}: {e}"
+        print(error_msg)
+        
+        # log error
+        with open(log_path, 'a') as log_file:
+            log_file.write("\n" + "=" * 50 + "\n")
+            log_file.write(f"ERROR: {e}\n")
+    
+    finally:
+        if os.path.exists(working_path):
+            os.remove(working_path)
+            print(f"Job {job_hash} removed from queue.")
+
 def worker_loop():
     """Continuously checks for new jobs and executes them."""
     print("Worker started, monitoring for jobs...")
@@ -66,31 +125,9 @@ def worker_loop():
                 os.rename(job_path, working_path)
                 print(f"Processing job: {job_hash} ({meta['filename']} by {meta['username']})")
                 
-                with open(working_path, "r") as f:
-                    code = f.read()
+                run_job(job_file, job_path, working_path, log_path, archive_path, meta, job_hash)
                 
-                # copy to archive
-                with open(archive_path, 'w') as archive:
-                    archive.write(code)
-                
-                with open(log_path, 'w') as log:
-                    log.write(f"Job: {meta['filename']}\n")
-                    log.write(f"User: {meta['username']}\n")
-                    log.write(f"Hash: {job_hash}\n")
-                    log.write("=" * 50 + "\n\n")
-                
-                time.sleep(0.5)
-                
-                result = execute_code(code)
-                
-                # Append result to log
-                with open(log_path, 'a') as log:
-                    log.write("\n" + "=" * 50 + "\n")
-                    log.write("Output:\n")
-                    log.write(result)
-                    log.write("\n\nJob completed successfully\n")
-                
-                print(f"Job {job_hash} completed. Result: {result}")
+                print(f"Job {job_hash} completed.")
                 
                 time.sleep(1)
                 
@@ -101,9 +138,9 @@ def worker_loop():
                 print(error_msg)
                 
                 # log error
-                with open(log_path, 'a') as log:
-                    log.write("\n" + "=" * 50 + "\n")
-                    log.write(f"ERROR: {e}\n")
+                with open(log_path, 'a') as log_file:
+                    log_file.write("\n" + "=" * 50 + "\n")
+                    log_file.write(f"ERROR: {e}\n")
                 
             finally:
                 if os.path.exists(working_path):

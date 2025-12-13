@@ -9,6 +9,7 @@ services:
     environment:
       - TREE_LEDS=100
       - LED_GPIO_PIN=18
+      - JOB_TIMEOUT=45
     volumes:
       - ./upload/src:/app
     privileged: true
