@@ -127,8 +127,9 @@ def worker_loop():
         job_files = sorted([f for f in os.listdir(JOB_DIR) if f.endswith(".py") and not f.endswith("_working.py")])
         
         if job_files:
-            stop_idle_animation()
+            # Cancel idle animation immediately when we find jobs
             idle_starter.cancel()
+            stop_idle_animation()
             
             job_file = job_files[0]
             job_hash = job_file.replace(".py", "")
@@ -145,7 +146,10 @@ def worker_loop():
             run_job(working_path, log_path, archive_path, meta, job_hash)
             cleanup_old_logs()
             
-            idle_starter.poke()
+            # Only poke idle animation if queue is empty now
+            remaining_jobs = [f for f in os.listdir(JOB_DIR) if f.endswith(".py") and not f.endswith("_working.py")]
+            if not remaining_jobs:
+                idle_starter.poke()
         
         time.sleep(2)
 
