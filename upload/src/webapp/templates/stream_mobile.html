@@ -115,15 +115,15 @@
     <div class="mobile-container">
         <div class="stats-bar">
             <div class="stat-item">
-                <div class="stat-value" id="uptime">{{ uptime }}</div>
+                <div class="stat-value" id="uptime">--</div>
                 <div class="stat-label">Uptime</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="total-jobs">{{ total_jobs }}</div>
+                <div class="stat-value" id="total-jobs">0</div>
                 <div class="stat-label">Done</div>
             </div>
             <div class="stat-item">
-                <div class="stat-value" id="pending-jobs">{{ pending_jobs }}</div>
+                <div class="stat-value" id="pending-jobs">0</div>
                 <div class="stat-label">Queue</div>
             </div>
         </div>
@@ -132,22 +132,21 @@
             <div class="user-section">
                 <div class="user-label">Current</div>
                 <div class="user-name" id="current-user">
-                    {% if current_user %}{{ current_user }}{% else %}<span class="no-user">Idle</span>{% endif %}
+                    <span class="no-user">Loading...</span>
                 </div>
             </div>
             <div class="divider"></div>
             <div class="user-section">
                 <div class="user-label">Last</div>
                 <div class="user-name" id="last-user">
-                    {% if last_user %}{{ last_user }}{% else %}<span class="no-user">None</span>{% endif %}
+                    <span class="no-user">Loading...</span>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Auto-refresh every 2 seconds
-        setInterval(() => {
+        function updateStream() {
             fetch('/api/stream')
                 .then(r => r.json())
                 .then(data => {
@@ -169,8 +168,15 @@
                     document.getElementById('uptime').textContent = data.uptime;
                     document.getElementById('total-jobs').textContent = data.total_jobs;
                     document.getElementById('pending-jobs').textContent = data.pending_jobs;
+                })
+                .catch(error => {
+                    console.error('Failed to fetch stream data:', error);
                 });
-        }, 2000);
+        }
+
+        // Update immediately and then every 2 seconds
+        updateStream();
+        setInterval(updateStream, 2000);
     </script>
 </body>
 </html>

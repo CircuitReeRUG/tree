@@ -84,43 +84,16 @@ def queue_api():
 @queue_bp.route('/stream')
 def stream_overlay():
     """OBS overlay showing current and last running user"""
-    queue_items = get_queue_data()
-    stats = load_stats()
-    
-    current_user = None
-    last_user = None
-    
-    # Find currently running job
-    for item in queue_items:
-        if item['status'] == 'running':
-            current_user = item['user']
-            break
-    
-    # Find last completed job
-    completed_items = [item for item in queue_items if item['status'] == 'completed']
-    if completed_items:
-        last_user = completed_items[0]['user']
-    
-    # Calculate uptime
-    uptime_seconds = int(time.time() - stats.get('start_time', time.time()))
-    uptime_days = uptime_seconds // 86400
-    uptime_hours = (uptime_seconds % 86400) // 3600
-    uptime_minutes = (uptime_seconds % 3600) // 60
-    uptime_str = f"{uptime_days}d {uptime_hours}h {uptime_minutes}m"
-    
-    total_jobs = stats.get('total_jobs', 0)
-    pending_count = sum(1 for item in queue_items if item['status'] == 'pending')
-    
-    return render_template('stream_overlay.html', 
-                         current_user=current_user, 
-                         last_user=last_user,
-                         uptime=uptime_str,
-                         total_jobs=total_jobs,
-                         pending_jobs=pending_count)
+    return render_template('stream_overlay.html')
 
 @queue_bp.route('/stream_mobile')
 def stream_mobile_overlay():
     """Mobile OBS overlay for vertical streams with stats"""
+    return render_template('stream_mobile.html')
+
+@queue_bp.route('/api/stream')
+def stream_api():
+    """API endpoint for stream overlay data"""
     queue_items = get_queue_data()
     stats = load_stats()
     
@@ -149,43 +122,6 @@ def stream_mobile_overlay():
         uptime_str = f"{uptime_days}d{uptime_hours}h"
     else:
         uptime_str = f"{uptime_hours}h{uptime_minutes}m"
-    
-    total_jobs = stats.get('total_jobs', 0)
-    pending_count = sum(1 for item in queue_items if item['status'] == 'pending')
-    
-    return render_template('stream_mobile.html', 
-                         current_user=current_user, 
-                         last_user=last_user,
-                         uptime=uptime_str,
-                         total_jobs=total_jobs,
-                         pending_jobs=pending_count)
-
-@queue_bp.route('/api/stream')
-def stream_api():
-    """API endpoint for stream overlay data"""
-    queue_items = get_queue_data()
-    stats = load_stats()
-    
-    current_user = None
-    last_user = None
-    
-    # Find currently running job
-    for item in queue_items:
-        if item['status'] == 'running':
-            current_user = item['user']
-            break
-    
-    # Find last completed job
-    completed_items = [item for item in queue_items if item['status'] == 'completed']
-    if completed_items:
-        last_user = completed_items[0]['user']
-    
-    # Calculate uptime
-    uptime_seconds = int(time.time() - stats.get('start_time', time.time()))
-    uptime_days = uptime_seconds // 86400
-    uptime_hours = (uptime_seconds % 86400) // 3600
-    uptime_minutes = (uptime_seconds % 3600) // 60
-    uptime_str = f"{uptime_days}d {uptime_hours}h {uptime_minutes}m"
     
     total_jobs = stats.get('total_jobs', 0)
     pending_count = sum(1 for item in queue_items if item['status'] == 'pending')
