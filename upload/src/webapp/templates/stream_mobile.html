@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CircuiTree Mobile Stream Overlay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #000000;
+            color: #FFFFFF;
+            overflow: hidden;
+        }
+
+        .mobile-container {
+            max-width: 400px;
+        }
+
+        .stats-bar {
+            background: linear-gradient(135deg, #F6921D 0%, #e07e14 100%);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .user-bar {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 12px;
+            border-top: 1px solid #404040;
+        }
+
+        .user-bar.running {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: inset 0 0 20px rgba(246, 146, 29, 0.2);
+            }
+            50% {
+                box-shadow: inset 0 0 30px rgba(246, 146, 29, 0.4);
+            }
+        }
+
+        .user-section {
+            text-align: center;
+            flex: 1;
+        }
+
+        .user-label {
+            font-size: 9px;
+            color: #BAB9B7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #FFFFFF;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .no-user {
+            font-style: italic;
+            color: #878787;
+            font-size: 12px;
+        }
+
+        .divider {
+            width: 1px;
+            height: 24px;
+            background: #404040;
+            margin: 0 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="uptime">{{ uptime }}</div>
+                <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="total-jobs">{{ total_jobs }}</div>
+                <div class="stat-label">Done</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="pending-jobs">{{ pending_jobs }}</div>
+                <div class="stat-label">Queue</div>
+            </div>
+        </div>
+
+        <div class="user-bar running">
+            <div class="user-section">
+                <div class="user-label">Current</div>
+                <div class="user-name" id="current-user">
+                    {% if current_user %}{{ current_user }}{% else %}<span class="no-user">Idle</span>{% endif %}
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="user-section">
+                <div class="user-label">Last</div>
+                <div class="user-name" id="last-user">
+                    {% if last_user %}{{ last_user }}{% else %}<span class="no-user">None</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh every 2 seconds
+        setInterval(() => {
+            fetch('/api/stream')
+                .then(r => r.json())
+                .then(data => {
+                    const currentEl = document.getElementById('current-user');
+                    const lastEl = document.getElementById('last-user');
+
+                    if (data.current_user) {
+                        currentEl.innerHTML = data.current_user;
+                    } else {
+                        currentEl.innerHTML = '<span class="no-user">Idle</span>';
+                    }
+
+                    if (data.last_user) {
+                        lastEl.innerHTML = data.last_user;
+                    } else {
+                        lastEl.innerHTML = '<span class="no-user">None</span>';
+                    }
+
+                    document.getElementById('uptime').textContent = data.uptime;
+                    document.getElementById('total-jobs').textContent = data.total_jobs;
+                    document.getElementById('pending-jobs').textContent = data.pending_jobs;
+                });
+        }, 2000);
+    </script>
+</body>
+</html>

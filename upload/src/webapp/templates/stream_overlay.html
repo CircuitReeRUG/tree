@@ -20,13 +20,15 @@
 
         .overlay-container {
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .user-display {
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             border-left: 5px solid #F6921D;
             padding: 15px 20px;
-            margin-bottom: 10px;
             border-radius: 5px;
             backdrop-filter: blur(10px);
             animation: slideIn 0.5s ease-out;
@@ -82,10 +84,45 @@
             font-style: italic;
             color: #878787;
         }
+
+        .stats-bar {
+            background: rgba(0, 0, 0, 0.8);
+            border-left: 5px solid #28a745;
+            padding: 12px 20px;
+            border-radius: 5px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-item-label {
+            font-size: 10px;
+            color: #BAB9B7;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+
+        .stat-item-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #28a745;
+            text-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        }
+
+
     </style>
 </head>
 <body>
     <div class="overlay-container">
+
         <div class="user-display current-user" id="current-display">
             <div class="user-label">Now Running</div>
             <div class="user-name" id="current-user">
@@ -97,6 +134,21 @@
             <div class="user-label">Last Run</div>
             <div class="user-name" id="last-user">
                 {% if last_user %}{{ last_user }}{% else %}<span class="no-user">No previous job</span>{% endif %}
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-item-label">Uptime</div>
+                <div class="stat-item-value" id="uptime">{{ uptime }}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-item-label">Total Jobs</div>
+                <div class="stat-item-value" id="total-jobs">{{ total_jobs }}</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-item-label">In Queue</div>
+                <div class="stat-item-value" id="pending-jobs">{{ pending_jobs }}</div>
             </div>
         </div>
     </div>
@@ -121,6 +173,10 @@
                     } else {
                         lastEl.innerHTML = '<span class="no-user">No previous job</span>';
                     }
+
+                    document.getElementById('uptime').textContent = data.uptime;
+                    document.getElementById('total-jobs').textContent = data.total_jobs;
+                    document.getElementById('pending-jobs').textContent = data.pending_jobs;
                 });
         }, 2000);
     </script>
