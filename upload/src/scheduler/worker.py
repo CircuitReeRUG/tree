@@ -50,6 +50,26 @@ def execute_code_wrapper(code, result_queue):
     except Exception as e:
         result_queue.put(('error', str(e)))
 
+def update_stats(success=True):
+    """Update stats file with job completion"""
+    stats_file = os.path.join(BASE_DIR, 'stats.json') if 'BASE_DIR' in globals() else 'stats.json'
+    
+    if not os.path.isabs(stats_file):
+        stats_file = os.path.join(os.path.dirname(__file__), 'stats.json')
+    
+    if os.path.exists(stats_file):
+        with open(stats_file, 'r') as f:
+            stats_data = json.load(f)
+    else:
+        stats_data = {'start_time': time.time(), 'total_jobs': 0, 'total_errors': 0}
+    
+    stats_data['total_jobs'] = stats_data.get('total_jobs', 0) + 1
+    if not success:
+        stats_data['total_errors'] = stats_data.get('total_errors', 0) + 1
+    
+    with open(stats_file, 'w') as f:
+        json.dump(stats_data, f)
+
 def run_job(working_path, log_path, archive_path, meta, job_hash):
     with open(working_path, "r") as f:
         code = f.read()
@@ -83,14 +103,19 @@ def run_job(working_path, log_path, archive_path, meta, job_hash):
             process.kill()
             process.join()
         result = f"Error: Job exceeded {TIMEOUT_SECONDS} second timeout"
+        update_stats(success=False)
     else:
         # Process finished normally
         if not result_queue.empty():
             status, result = result_queue.get()
             if status == 'error':
                 result = f"Error: {result}"
+                update_stats(success=False)
+            else:
+                update_stats(success=True)
         else:
             result = "Error: Job finished but produced no output"
+            update_stats(success=False)
     
     with open(log_path, 'a') as log_file:
         log_file.write(result)

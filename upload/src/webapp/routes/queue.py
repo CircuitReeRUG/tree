@@ -10,6 +10,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '
 JOB_DIR = os.path.join(BASE_DIR, "jobs")
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 METADATA_FILE = os.path.join(BASE_DIR, "metadata.json")
+STATS_FILE = os.path.join(BASE_DIR, "stats.json")
 
 def load_metadata():
     if os.path.exists(METADATA_FILE):
@@ -18,11 +19,14 @@ def load_metadata():
     return {}
 
 def load_stats():
-    stats_file = os.path.join(BASE_DIR, "stats.json")
-    if os.path.exists(stats_file):
-        with open(stats_file, 'r') as f:
+    if os.path.exists(STATS_FILE):
+        with open(STATS_FILE, 'r') as f:
             return json.load(f)
-    return {}
+    # Initialize if doesn't exist
+    stats = {'start_time': time.time(), 'total_jobs': 0, 'total_errors': 0}
+    with open(STATS_FILE, 'w') as f:
+        json.dump(stats, f)
+    return stats
 
 def get_queue_data():
     queue_items = []
