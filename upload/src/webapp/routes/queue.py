@@ -68,3 +68,48 @@ def monitor():
 @queue_bp.route('/api/queue')
 def queue_api():
     return jsonify(get_queue_data())
+
+@queue_bp.route('/stream')
+def stream_overlay():
+    """OBS overlay showing current and last running user"""
+    queue_items = get_queue_data()
+    
+    current_user = None
+    last_user = None
+    
+    # Find currently running job
+    for item in queue_items:
+        if item['status'] == 'running':
+            current_user = item['user']
+            break
+    
+    # Find last completed job
+    completed_items = [item for item in queue_items if item['status'] == 'completed']
+    if completed_items:
+        last_user = completed_items[0]['user']
+    
+    return render_template('stream_overlay.html', current_user=current_user, last_user=last_user)
+
+@queue_bp.route('/api/stream')
+def stream_api():
+    """API endpoint for stream overlay data"""
+    queue_items = get_queue_data()
+    
+    current_user = None
+    last_user = None
+    
+    # Find currently running job
+    for item in queue_items:
+        if item['status'] == 'running':
+            current_user = item['user']
+            break
+    
+    # Find last completed job
+    completed_items = [item for item in queue_items if item['status'] == 'completed']
+    if completed_items:
+        last_user = completed_items[0]['user']
+    
+    return jsonify({
+        'current_user': current_user,
+        'last_user': last_user
+    })

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CircuiTree Stream Overlay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: transparent;
+            color: #FFFFFF;
+            overflow: hidden;
+        }
+
+        .overlay-container {
+            padding: 20px;
+        }
+
+        .user-display {
+            background: rgba(0, 0, 0, 0.7);
+            border-left: 5px solid #F6921D;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .user-label {
+            font-size: 14px;
+            color: #F6921D;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .user-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFFFFF;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .current-user {
+            border-left-color: #F6921D;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(246, 146, 29, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(246, 146, 29, 0.6);
+            }
+        }
+
+        .last-user {
+            border-left-color: #878787;
+            opacity: 0.8;
+        }
+
+        .no-user {
+            font-style: italic;
+            color: #878787;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay-container">
+        <div class="user-display current-user" id="current-display">
+            <div class="user-label">Now Running</div>
+            <div class="user-name" id="current-user">
+                {% if current_user %}{{ current_user }}{% else %}<span class="no-user">No job running</span>{% endif %}
+            </div>
+        </div>
+
+        <div class="user-display last-user" id="last-display">
+            <div class="user-label">Last Run</div>
+            <div class="user-name" id="last-user">
+                {% if last_user %}{{ last_user }}{% else %}<span class="no-user">No previous job</span>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh every 2 seconds
+        setInterval(() => {
+            fetch('/api/stream')
+                .then(r => r.json())
+                .then(data => {
+                    const currentEl = document.getElementById('current-user');
+                    const lastEl = document.getElementById('last-user');
+
+                    if (data.current_user) {
+                        currentEl.innerHTML = data.current_user;
+                    } else {
+                        currentEl.innerHTML = '<span class="no-user">No job running</span>';
+                    }
+
+                    if (data.last_user) {
+                        lastEl.innerHTML = data.last_user;
+                    } else {
+                        lastEl.innerHTML = '<span class="no-user">No previous job</span>';
+                    }
+                });
+        }, 2000);
+    </script>
+</body>
+</html>
