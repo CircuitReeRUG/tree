@@ -31,6 +31,7 @@ def execute_code(code):
         "_getitem_": lambda obj, index: obj[index],
         "_inplacevar_": _inplacevar_,
         "_print_": PrintCollector,
+        "__write__": _write_,
         "_getattr_": safer_getattr,
         "_getiter_": default_guarded_getiter,
         "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
