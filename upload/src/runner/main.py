@@ -26,11 +26,13 @@ def execute_code(code):
                         "divmod": divmod, "all": all, "any": any, "isinstance": isinstance,
                         "chr": chr, "ord": ord, "hex": hex, "oct": oct, "bin": bin,
                         "range": range}
+    print_collector = PrintCollector()
+
     restricted_globals = {
         "__builtins__": allowed_builtins,
         "_getitem_": lambda obj, index: obj[index],
         "_inplacevar_": _inplacevar_,
-        "_print_": PrintCollector,
+        "_print_": print_collector,
         "_getattr_": safer_getattr,
         "_write_": _write_,
         "_getiter_": default_guarded_getiter,
@@ -45,15 +47,21 @@ def execute_code(code):
         "math": math, "random": random
     }
     restricted_globals.update(get_exposed_functions())
-    
+
     try:
         exec(byte_code, restricted_globals)
-        result = restricted_globals.get("_print", lambda: "")()
+        result = print_collector.txt
         return result if result.strip() else "No prints invoked, but ur program executed ok (we hope)"
     except Exception as e:
         import traceback
-        return f"Error: {e}\n\nFull traceback:\n{traceback.format_exc()}"
-    
+        printed_output = print_collector.txt
+        error_msg = f"Error: {e}\n\nFull traceback:\n{traceback.format_exc()}"
+
+        if printed_output.strip():
+            return f"Output before error:\n{printed_output}\n\n{error_msg}"
+        else:
+            return error_msg
+        
 def __debug_cli():
     with open(sys.argv[1], "r") as f:
         print(execute_code(f.read()))
