@@ -26,15 +26,12 @@ def execute_code(code):
                         "divmod": divmod, "all": all, "any": any, "isinstance": isinstance,
                         "chr": chr, "ord": ord, "hex": hex, "oct": oct, "bin": bin,
                         "range": range}
-    print_collector = PrintCollector()
-
     restricted_globals = {
         "__builtins__": allowed_builtins,
         "_getitem_": lambda obj, index: obj[index],
         "_inplacevar_": _inplacevar_,
-        "_print_": print_collector,
+        "_print_": PrintCollector,
         "_getattr_": safer_getattr,
-        "_write_": _write_,
         "_getiter_": default_guarded_getiter,
         "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
         "_unpack_sequence_": guarded_unpack_sequence,
