@@ -47,21 +47,18 @@ def execute_code(code):
         "math": math, "random": random
     }
     restricted_globals.update(get_exposed_functions())
-
+    
     try:
         exec(byte_code, restricted_globals)
-        result = '\n'.join(print_collector.txt)
+        result = restricted_globals.get("_print", lambda: "")()
         return result if result.strip() else "No prints invoked, but ur program executed ok (we hope)"
     except Exception as e:
         import traceback
-        printed_output = '\n'.join(print_collector.txt)
-        error_msg = f"Error: {e}\n\nFull traceback:\n{traceback.format_exc()}"
-
-        if printed_output.strip():
-            return f"Output before error:\n{printed_output}\n\n{error_msg}"
-        else:
-            return error_msg
-        
+        result = restricted_globals.get("_print", lambda: "")()
+        if result.strip():
+            return result + f"\n\nError: {e}\n\nFull traceback:\n{traceback.format_exc()}"
+        return f"Error: {e}\n\nFull traceback:\n{traceback.format_exc()}"
+    
 def __debug_cli():
     with open(sys.argv[1], "r") as f:
         print(execute_code(f.read()))
