@@ -15,6 +15,9 @@ def _inplacevar_(op, var, expr):
            "^=": lambda: var ^ expr, "&=": lambda: var & expr, "//=": lambda: var // expr}
     return ops.get(op, lambda: var)()
 
+def _write_(obj):
+    return obj
+
 def execute_code(code):
     byte_code = compile_restricted(code, "<user_code>", "exec")
     allowed_builtins = {**safe_builtins, "enumerate": enumerate, "zip": zip, "map": map,
@@ -29,6 +32,7 @@ def execute_code(code):
         "_inplacevar_": _inplacevar_,
         "_print_": PrintCollector,
         "_getattr_": safer_getattr,
+        "_write_": _write_,
         "_getiter_": default_guarded_getiter,
         "_iter_unpack_sequence_": guarded_iter_unpack_sequence,
         "_unpack_sequence_": guarded_unpack_sequence,
