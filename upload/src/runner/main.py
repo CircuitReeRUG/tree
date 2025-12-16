@@ -50,11 +50,11 @@ def execute_code(code):
 
     try:
         exec(byte_code, restricted_globals)
-        result = print_collector.txt
+        result = '\n'.join(print_collector.txt)
         return result if result.strip() else "No prints invoked, but ur program executed ok (we hope)"
     except Exception as e:
         import traceback
-        printed_output = print_collector.txt
+        printed_output = '\n'.join(print_collector.txt)
         error_msg = f"Error: {e}\n\nFull traceback:\n{traceback.format_exc()}"
 
         if printed_output.strip():
