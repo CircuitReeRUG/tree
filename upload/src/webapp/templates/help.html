@@ -1,8 +1,18 @@
 <!-- Help Button -->
 <button id="helpBtn" class="help-btn">?</button>
 <div id="helpModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 900px; height: 80vh; max-height: 700px; overflow-y: auto;">
         <span class="close">&times;</span>
+        <h3>CircuitRee Live Stream</h3>
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin-bottom: 20px;">
+            <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                    src="https://www.youtube.com/embed/live_stream?channel=UCiQ5vQKKIqoC5t_T--9ls8Q" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+            </iframe>
+        </div>
+        <hr>
         <h3>API Reference</h3>
         <p><code>getLEDCount()</code> - returns LED count</p>
         <p><code>setLEDs([(r,g,b,l), ...])</code> - set all LEDs (r,g,b: 0-255, l: 0-100)</p>
@@ -23,7 +33,22 @@
 </div>
 
 <script>
+    // Show modal on first visit
+    if (!localStorage.getItem('helpModalShown')) {
+        document.getElementById('helpModal').style.display = 'block';
+    }
+    
     document.getElementById('helpBtn').onclick = () => document.getElementById('helpModal').style.display = 'block';
-    document.querySelector('.close').onclick = () => document.getElementById('helpModal').style.display = 'none';
-    window.onclick = (e) => { if (e.target == document.getElementById('helpModal')) e.target.style.display = 'none'; };
+    
+    document.querySelector('.close').onclick = () => {
+        document.getElementById('helpModal').style.display = 'none';
+        localStorage.setItem('helpModalShown', 'true');
+    };
+    
+    window.onclick = (e) => { 
+        if (e.target == document.getElementById('helpModal')) {
+            e.target.style.display = 'none';
+            localStorage.setItem('helpModalShown', 'true');
+        }
+    };
 </script>

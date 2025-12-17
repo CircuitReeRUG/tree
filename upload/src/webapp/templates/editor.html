@@ -313,9 +313,8 @@ SIZE: int  # Total number of LEDs in the tree
             monaco.editor.setModelMarkers(model, 'python', markers);
         }
 
-        // Create the editor
-        editor = monaco.editor.create(document.getElementById('editor'), {
-            value: `# CircuitRee LED Programming Template
+        // Default template code
+        const defaultCode = `# CircuitRee LED Programming Template
 # Available functions: getLEDCount(), setLEDs(), clearLEDs(), sleep()
 
 # Example: Simple color fade
@@ -342,18 +341,46 @@ sleep(1)
 # Clear all LEDs
 clearLEDs()
 
-`,
+`;
+
+        // Load saved code from localStorage or use default
+        const savedCode = localStorage.getItem('editorCode') || defaultCode;
+
+        // Create the editor
+        editor = monaco.editor.create(document.getElementById('editor'), {
+            value: savedCode,
             language: 'python',
             theme: 'vs-dark',
             automaticLayout: true,
             minimap: { enabled: false },
             fontSize: 14,
             tabSize: 4,
-            insertSpaces: true
+            insertSpaces: true,
+            suggestOnTriggerCharacters: true,
+            quickSuggestions: {
+                other: true,
+                comments: false,
+                strings: false
+            },
+            parameterHints: {
+                enabled: true
+            },
+            suggest: {
+                snippetsPreventQuickSuggestions: false
+            }
         });
 
+        // Autosave functionality with debouncing
+        let saveTimeout;
         editor.onDidChangeModelContent(() => {
             validatePythonCode(editor.getModel());
+            
+            // Debounced autosave (save 1 second after typing stops)
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                const code = editor.getValue();
+                localStorage.setItem('editorCode', code);
+            }, 1000);
         });
 
         validatePythonCode(editor.getModel());
